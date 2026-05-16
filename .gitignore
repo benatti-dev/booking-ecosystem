@@ -1,0 +1,54 @@
+# ─── OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ──────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+nbproject/
+
+# ─── Java / Maven ─────────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+.mvn/wrapper/maven-wrapper.jar
+
+# ─── Spring Boot ──────────────────────────────────────────────────
+application-local.yml
+application-local.properties
+*.env
+
+# ─── Node / Angular ───────────────────────────────────────────────
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Environment / Secrets ────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# ─── Docker ───────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Test / Coverage ──────────────────────────────────────────────
+coverage/
+*.exec
+surefire-reports/

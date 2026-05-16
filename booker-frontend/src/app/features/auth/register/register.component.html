@@ -1,0 +1,74 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Create an account</h1>
+      <p class="text-sm text-gray-500 mt-1">Join Booker and start booking services</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+        <input formControlName="fullName" type="text" autocomplete="name"
+               placeholder="Jane Doe"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [class.border-red-500]="isInvalid('fullName')" />
+        <p *ngIf="isInvalid('fullName')" class="text-xs text-red-500 mt-1">Full name is required</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input formControlName="email" type="email" autocomplete="email"
+               placeholder="you@example.com"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [class.border-red-500]="isInvalid('email')" />
+        <p *ngIf="isInvalid('email')" class="text-xs text-red-500 mt-1">
+          Enter a valid email address
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Phone <span class="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input formControlName="phone" type="tel" autocomplete="tel"
+               placeholder="+380501234567"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input formControlName="password" type="password" autocomplete="new-password"
+               placeholder="At least 8 characters"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [class.border-red-500]="isInvalid('password')" />
+        <p *ngIf="isInvalid('password')" class="text-xs text-red-500 mt-1">
+          Password must be at least 8 characters
+        </p>
+      </div>
+
+      <p *ngIf="errorMessage()"
+         class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        {{ errorMessage() }}
+      </p>
+
+      <button type="submit" [disabled]="loading()"
+              class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60
+                     text-white font-medium py-2.5 rounded-lg transition-colors text-sm mt-2">
+        {{ loading() ? 'Creating account...' : 'Create account' }}
+      </button>
+
+    </form>
+
+    <p class="text-center text-sm text-gray-500 mt-6">
+      Already have an account?
+      <a routerLink="/login" class="text-blue-600 hover:underline font-medium">Sign in</a>
+    </p>
+
+  </div>
+</div>

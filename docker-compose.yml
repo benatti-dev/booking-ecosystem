@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: booker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       booker
+      POSTGRES_USER:     booker
+      POSTGRES_PASSWORD: booker_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booker -d booker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

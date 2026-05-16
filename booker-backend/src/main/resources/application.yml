@@ -1,0 +1,82 @@
+﻿spring:
+  application:
+    name: booker-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/booker}
+    username: ${DB_USER:booker}
+    password: ${DB_PASS:booker_secret}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  mail:
+    host: ${MAIL_HOST:smtp.sendgrid.net}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:apikey}
+    password: ${MAIL_PASS:changeme}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    from: ${MAIL_FROM:noreply@booker.app}
+
+  thymeleaf:
+    prefix: classpath:/templates/email/
+    suffix: .html
+
+  cache:
+    type: simple
+
+# App settings
+app:
+  jwt:
+    secret: ${JWT_SECRET:Y2hhbmdlLXRoaXMtdG8tYS12ZXJ5LWxvbmctcmFuZG9tLTI1Ni1iaXQtYmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==}
+    expiration-ms: 3600000        # 1 hour
+  refresh-token:
+    expiry-days: 7
+  password-reset:
+    expiry-hours: 1
+    base-url: ${FRONTEND_URL:http://localhost:4200}
+  cors:
+    allowed-origins: "http://localhost:4200,${FRONTEND_URL:http://localhost:4200}"
+
+# SpringDoc / Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    com.booker: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
