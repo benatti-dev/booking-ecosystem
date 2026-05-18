@@ -72,6 +72,23 @@ export const routes: Routes = [
       import('./features/admin/admin.component').then(m => m.AdminComponent)
   },
   {
+    path: 'business/:businessId',
+    loadComponent: () =>
+      import('./features/booking/business-detail/business-detail.component').then(m => m.BusinessDetailComponent)
+  },
+  {
+    path: 'booking/confirm',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/booking/booking-confirm/booking-confirm.component').then(m => m.BookingConfirmComponent)
+  },
+  {
+    path: 'booking/success',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/booking/booking-success/booking-success.component').then(m => m.BookingSuccessComponent)
+  },
+  {
     path: '**',
     redirectTo: '/home'
   }

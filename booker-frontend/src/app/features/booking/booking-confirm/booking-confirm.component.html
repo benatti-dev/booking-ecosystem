@@ -1,0 +1,62 @@
+<div class="min-h-screen bg-gray-50 flex items-start justify-center pt-10 px-4">
+  <div class="w-full max-w-lg">
+    <div class="bg-white rounded-2xl shadow-sm p-8">
+      <h1 class="text-2xl font-bold text-gray-900 mb-6">Confirm Booking</h1>
+
+      <!-- Booking summary -->
+      <div class="bg-indigo-50 rounded-xl p-5 mb-6 space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Service</span>
+          <span class="font-medium">{{ serviceName }}</span>
+        </div>
+        <div class="flex justify-between" *ngIf="employeeName">
+          <span class="text-gray-500">Specialist</span>
+          <span class="font-medium">{{ employeeName }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Date &amp; Time</span>
+          <span class="font-medium">{{ formatDateTime(date, slot) }}</span>
+        </div>
+        <div class="flex justify-between" *ngIf="price">
+          <span class="text-gray-500">Price</span>
+          <span class="font-semibold text-indigo-700">{{ price }}</span>
+        </div>
+      </div>
+
+      <!-- Client note -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Note (optional)
+        </label>
+        <textarea
+          [formControl]="clientNoteCtrl"
+          rows="3"
+          placeholder="Special requests, allergies, etc."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </textarea>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error$ | async as error"
+           class="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+        {{ error }}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button
+          routerLink="/home"
+          class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button
+          class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          [disabled]="creating$ | async"
+          (click)="confirm()">
+          <span *ngIf="!(creating$ | async)">Confirm Booking</span>
+          <span *ngIf="creating$ | async">Booking...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<div class="bg-white rounded-2xl shadow-sm p-6">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="text-lg font-semibold text-gray-800">Bookings</h2>
+    <div class="flex gap-2">
+      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50" (click)="filterStatus = null">
+        All
+      </button>
+      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-yellow-50"
+              (click)="filterStatus = 'PENDING'">
+        Pending
+      </button>
+      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-green-50"
+              (click)="filterStatus = 'CONFIRMED'">
+        Confirmed
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading$ | async" class="text-center text-gray-400 py-6">Loading...</div>
+
+  <ng-container *ngIf="!(loading$ | async)">
+    <div *ngFor="let booking of filteredBookings()"
+         class="border border-gray-100 rounded-xl p-4 mb-3 hover:shadow-sm transition-shadow">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-medium text-gray-900">{{ booking.clientName }}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full"
+                  [ngClass]="statusClass(booking.status)">
+              {{ statusLabel(booking.status) }}
+            </span>
+          </div>
+          <p class="text-sm text-gray-600">{{ booking.serviceName }}</p>
+          <p class="text-sm text-gray-400 mt-1">
+            {{ booking.startTime | date:'EEE d MMM, HH:mm' }}
+            — {{ booking.endTime | date:'HH:mm' }}
+          </p>
+          <p class="text-xs text-gray-400" *ngIf="booking.employeeName">
+            {{ booking.employeeName }}
+          </p>
+        </div>
+        <div class="flex flex-col gap-2 ml-4">
+          <button
+            *ngIf="booking.status === 'PENDING'"
+            (click)="confirm(booking)"
+            class="text-sm px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            Confirm
+          </button>
+          <button
+            *ngIf="booking.status === 'CONFIRMED'"
+            (click)="complete(booking)"
+            class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Complete
+          </button>
+          <button
+            *ngIf="booking.status === 'PENDING' || booking.status === 'CONFIRMED'"
+            (click)="cancel(booking)"
+            class="text-sm px-3 py-1 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="filteredBookings().length === 0"
+         class="text-center text-gray-400 py-10">
+      No bookings found
+    </div>
+  </ng-container>
+</div>

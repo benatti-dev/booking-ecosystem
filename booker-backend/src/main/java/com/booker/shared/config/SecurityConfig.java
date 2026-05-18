@@ -1,6 +1,7 @@
 package com.booker.shared.config;
 
 import com.booker.shared.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +44,7 @@ public class SecurityConfig {
             "/auth/**",
             "/search/**",
             "/categories/**",
+            "/slots",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
@@ -65,6 +67,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categories/*/attribute-definitions").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

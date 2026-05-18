@@ -10,8 +10,10 @@ import { filter, take } from 'rxjs';
 import { jwtInterceptor, authErrorInterceptor } from './core/auth/auth.interceptors';
 import { authFeature } from './store/auth/auth.reducer';
 import { businessFeature } from './store/business/business.reducer';
+import { bookingReducer } from './store/booking/booking.reducer';
 import { AuthEffects } from './store/auth/auth.effects';
 import { BusinessEffects } from './store/business/business.effects';
+import { BookingEffects } from './store/booking/booking.effects';
 import { AuthActions } from './store/auth/auth.actions';
 import { selectInitialized } from './store/auth/auth.selectors';
 import { routes } from './app.routes';
@@ -28,7 +30,8 @@ export const appConfig: ApplicationConfig = {
     provideStore(),
     provideState(authFeature),
     provideState(businessFeature),
-    provideEffects(AuthEffects, BusinessEffects),
+    provideState({ name: 'booking', reducer: bookingReducer }),
+    provideEffects(AuthEffects, BusinessEffects, BookingEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode(), connectInZone: true }),
     {
       provide: APP_INITIALIZER,
