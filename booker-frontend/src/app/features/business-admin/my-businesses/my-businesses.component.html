@@ -1,0 +1,88 @@
+<div class="p-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Businesses</h1>
+    <a *ngIf="!(isAdmin$ | async)" routerLink="../register"
+       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+      + Register Business
+    </a>
+  </div>
+
+  <!-- Tabs (ADMIN only) -->
+  <div *ngIf="isAdmin$ | async" class="flex gap-1 mb-6 border-b border-gray-200">
+    <button (click)="switchTab('my')"
+            class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
+            [ngClass]="(activeTab$ | async) === 'my'
+              ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50'
+              : 'text-gray-500 hover:text-gray-700'">
+      My Businesses
+    </button>
+    <button (click)="switchTab('all')"
+            class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
+            [ngClass]="(activeTab$ | async) === 'all'
+              ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50'
+              : 'text-gray-500 hover:text-gray-700'">
+      All Businesses
+    </button>
+  </div>
+
+  <!-- ── MY BUSINESSES tab ── -->
+  <ng-container *ngIf="(activeTab$ | async) === 'my'">
+    <div *ngIf="loadingMy$ | async" class="text-gray-400">Loading...</div>
+    <div *ngIf="errorMy$ | async as err" class="p-4 bg-red-50 text-red-600 rounded-lg">{{ err }}</div>
+
+    <div *ngIf="!(loadingMy$ | async) && !(errorMy$ | async) && (myList$ | async)?.length === 0"
+         class="text-center py-16 text-gray-400">
+      <p class="text-5xl mb-4">🏢</p>
+      <p class="text-lg font-medium">No businesses yet</p>
+      <p *ngIf="!(isAdmin$ | async)" class="mt-1">Register your first business to get started.</p>
+    </div>
+
+    <div *ngIf="!(loadingMy$ | async) && (myList$ | async)?.length"
+         class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ng-container *ngTemplateOutlet="cards; context: { $implicit: myList$ | async }"></ng-container>
+    </div>
+  </ng-container>
+
+  <!-- ── ALL BUSINESSES tab (ADMIN) ── -->
+  <ng-container *ngIf="(activeTab$ | async) === 'all'">
+    <div *ngIf="loadingAll$ | async" class="text-gray-400">Loading...</div>
+    <div *ngIf="errorAll$ | async as err" class="p-4 bg-red-50 text-red-600 rounded-lg">{{ err }}</div>
+
+    <div *ngIf="!(loadingAll$ | async) && !(errorAll$ | async) && (allList$ | async)?.length === 0"
+         class="text-center py-16 text-gray-400">
+      <p class="text-5xl mb-4">🏢</p>
+      <p class="text-lg font-medium">No businesses found</p>
+    </div>
+
+    <div *ngIf="!(loadingAll$ | async) && (allList$ | async)?.length"
+         class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ng-container *ngTemplateOutlet="cards; context: { $implicit: allList$ | async }"></ng-container>
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- Shared card template -->
+<ng-template #cards let-list>
+  <div *ngFor="let b of list; trackBy: trackById"
+       class="bg-white rounded-xl shadow p-5 border border-gray-100 flex flex-col gap-3">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="font-semibold text-gray-900">{{ b.name }}</h3>
+        <p class="text-sm text-gray-500">{{ b.category.label }}</p>
+        <p *ngIf="isAdmin$ | async" class="text-xs text-gray-400 mt-0.5">{{ b.ownerName }}</p>
+      </div>
+      <span class="text-xs px-2 py-1 rounded-full font-medium" [ngClass]="statusClass(b.status)">
+        {{ b.status }}
+      </span>
+    </div>
+    <p *ngIf="b.description" class="text-sm text-gray-600 line-clamp-2">{{ b.description }}</p>
+    <a [routerLink]="['../', b.id, 'services']"
+       class="mt-auto text-sm text-blue-600 hover:underline font-medium">
+      Manage Services →
+    </a>
+  </div>
+</ng-template>
+

@@ -62,6 +62,10 @@ app:
     base-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
     allowed-origins: "http://localhost:4200,${FRONTEND_URL:http://localhost:4200}"
+  admin:
+    email: ${ADMIN_EMAIL:admin@booker.app}
+    password: ${ADMIN_PASSWORD:12345678}
+    full-name: ${ADMIN_FULL_NAME:Platform Admin}
 
 # SpringDoc / Swagger
 springdoc:

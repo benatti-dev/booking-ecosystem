@@ -11,9 +11,9 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <ng-container *ngIf="auth.isAuthenticated$ | async; else guestLinks">
+        <ng-container *ngIf="isAuthenticated$ | async; else guestLinks">
           <span class="text-sm text-gray-700">
-            {{ (auth.user$ | async)?.email }}
+            {{ userEmail$ | async }}
           </span>
           <a routerLink="/dashboard"
              class="text-sm text-gray-600 hover:text-blue-600 transition-colors">

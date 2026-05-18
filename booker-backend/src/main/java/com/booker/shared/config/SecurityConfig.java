@@ -58,9 +58,12 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_MATCHERS).permitAll()
-                        // Public GET on business services and business profiles
+                        // Public GET on business services, service detail, and business profiles
                         .requestMatchers(HttpMethod.GET, "/businesses/*/services").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/businesses/*/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/businesses/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/services/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categories/*/attribute-definitions").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

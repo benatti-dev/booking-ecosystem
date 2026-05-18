@@ -29,15 +29,15 @@
                [class.border-red-500]="isInvalid('password')" />
       </div>
 
-      <p *ngIf="errorMessage()"
+      <p *ngIf="error$ | async as err"
          class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-        {{ errorMessage() }}
+        {{ err }}
       </p>
 
-      <button type="submit" [disabled]="loading()"
+      <button type="submit" [disabled]="loading$ | async"
               class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60
                      text-white font-medium py-2.5 rounded-lg transition-colors text-sm">
-        {{ loading() ? 'Signing in...' : 'Sign in' }}
+        {{ (loading$ | async) ? 'Signing in...' : 'Sign in' }}
       </button>
 
     </form>

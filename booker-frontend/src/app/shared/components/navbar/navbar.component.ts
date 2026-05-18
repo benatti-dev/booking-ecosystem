@@ -1,7 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AsyncPipe, NgIf } from '@angular/common';
-import { AuthService } from '../../../core/auth/auth.service';
+import { Store } from '@ngrx/store';
+import { AuthActions } from '../../../store/auth/auth.actions';
+import { selectIsAuthenticated, selectUserEmail } from '../../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-navbar',
@@ -11,10 +13,12 @@ import { AuthService } from '../../../core/auth/auth.service';
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly store = inject(Store);
+
+  readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
+  readonly userEmail$       = this.store.select(selectUserEmail);
 
   logout(): void {
-    this.auth.logout();
+    this.store.dispatch(AuthActions.logout());
   }
 }

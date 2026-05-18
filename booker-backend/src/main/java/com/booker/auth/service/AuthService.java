@@ -156,7 +156,7 @@ public class AuthService {
         // JWT claims aligned with @benatti/ng-auth-lib TokenDecoderService expectations:
         // roles (array), email, username (= email used as login identifier)
         Map<String, Object> claims = Map.of(
-                "roles", List.of("ROLE_" + user.getRole().name()),
+                "roles", List.of(user.getRole().name()),
                 "role",  user.getRole().name(),
                 "email", user.getEmail(),
                 "username", user.getEmail(),

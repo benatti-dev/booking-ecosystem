@@ -1,28 +1,33 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { NgIf } from '@angular/common';
-import { AuthService } from '../../../core/auth/auth.service';
+import { RouterLink } from '@angular/router';
+import { AsyncPipe, NgIf } from '@angular/common';
+import { Store } from '@ngrx/store';
+import { AuthActions } from '../../../store/auth/auth.actions';
+import { selectAuthLoading, selectAuthError } from '../../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, NgIf],
+  imports: [ReactiveFormsModule, RouterLink, NgIf, AsyncPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
-  private readonly fb     = inject(FormBuilder);
-  private readonly auth   = inject(AuthService);
-  private readonly router = inject(Router);
+export class LoginComponent implements OnInit {
+  private readonly fb    = inject(FormBuilder);
+  private readonly store = inject(Store);
 
-  protected readonly loading      = signal(false);
-  protected readonly errorMessage = signal('');
+  readonly loading$ = this.store.select(selectAuthLoading);
+  readonly error$   = this.store.select(selectAuthError);
 
   protected readonly form = this.fb.group({
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]]
   });
+
+  ngOnInit(): void {
+    this.store.dispatch(AuthActions.clearError());
+  }
 
   protected isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
@@ -30,24 +35,8 @@ export class LoginComponent {
   }
 
   protected onSubmit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.loading.set(true);
-    this.errorMessage.set('');
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const { email, password } = this.form.value;
-    this.auth.login(email!, password!).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.router.navigateByUrl('/dashboard');
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.errorMessage.set(
-          err.status === 401 ? 'Invalid email or password' : 'Login failed. Please try again.'
-        );
-      }
-    });
+    this.store.dispatch(AuthActions.login({ email: email!, password: password! }));
   }
 }

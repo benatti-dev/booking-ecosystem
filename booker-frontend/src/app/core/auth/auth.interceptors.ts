@@ -1,8 +1,9 @@
-import { inject } from '@angular/core';
+﻿import { inject } from '@angular/core';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { Store } from '@ngrx/store';
 import { AuthService } from './auth.service';
-import { Router } from '@angular/router';
+import { AuthActions } from '../../store/auth/auth.actions';
 import { environment } from '../../../environments/environment';
 
 /** Paths that must NOT receive the Authorization header. */
@@ -26,14 +27,13 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 /** On 401: attempt a silent token refresh once, then replay the original request.
- *  On second 401 (refresh also failed): clear session and redirect to /login. */
+ *  On second 401 (refresh also failed): dispatch logout action. */
 export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth   = inject(AuthService);
-  const router = inject(Router);
+  const auth  = inject(AuthService);
+  const store = inject(Store);
 
   return next(req).pipe(
     catchError(err => {
-      // Only handle 401 from our API; skip auth endpoints to avoid infinite loops
       if (err.status !== 401 || !req.url.startsWith(environment.apiUrl) || isAuthPath(req.url)) {
         return throwError(() => err);
       }
@@ -47,13 +47,10 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
           return next(retried);
         }),
         catchError(refreshErr => {
-          // Refresh failed — force logout
-          localStorage.removeItem('booker_token');
-          localStorage.removeItem('booker_refresh');
-          router.navigateByUrl('/login');
+          store.dispatch(AuthActions.logout());
           return throwError(() => refreshErr);
-        })
+        }),
       );
-    })
+    }),
   );
 };

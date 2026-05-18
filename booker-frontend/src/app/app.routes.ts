@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from './core/auth/auth.guard';
+import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -9,11 +9,13 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'register',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/register/register.component').then(m => m.RegisterComponent)
   },
@@ -33,7 +35,34 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['BUSINESS_OWNER', 'ADMIN'] },
     loadComponent: () =>
-      import('./features/business-admin/business-admin.component').then(m => m.BusinessAdminComponent)
+      import('./features/business-admin/business-admin.component').then(m => m.BusinessAdminComponent),
+    children: [
+      {
+        path: '',
+        redirectTo: 'my-businesses',
+        pathMatch: 'full'
+      },
+      {
+        path: 'my-businesses',
+        loadComponent: () =>
+          import('./features/business-admin/my-businesses/my-businesses.component').then(m => m.MyBusinessesComponent)
+      },
+      {
+        path: 'register',
+        loadComponent: () =>
+          import('./features/business-admin/business-register/business-register.component').then(m => m.BusinessRegisterComponent)
+      },
+      {
+        path: ':businessId/services',
+        loadComponent: () =>
+          import('./features/business-admin/service-list/service-list.component').then(m => m.ServiceListComponent)
+      },
+      {
+        path: ':businessId/services/new',
+        loadComponent: () =>
+          import('./features/business-admin/service-form/service-form.component').then(m => m.ServiceFormComponent)
+      }
+    ]
   },
   {
     path: 'admin',
@@ -47,4 +76,5 @@ export const routes: Routes = [
     redirectTo: '/home'
   }
 ];
+
 

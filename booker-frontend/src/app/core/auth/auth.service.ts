@@ -1,16 +1,16 @@
-import { inject, Injectable } from '@angular/core';
+﻿import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-// ── Domain types ──────────────────────────────────────────────────────────────
+// -- Domain types
 
 export interface AuthUser {
   id: number;
   email: string;
   fullName: string;
-  roles: string[];   // e.g. ['ROLE_CLIENT']
+  roles: string[];
 }
 
 export interface AuthResponse {
@@ -28,7 +28,7 @@ export interface RegisterRequest {
   password: string;
 }
 
-// ── JWT payload as issued by our backend ─────────────────────────────────────
+// -- JWT payload
 
 interface JwtPayload {
   sub: string;
@@ -41,55 +41,57 @@ interface JwtPayload {
   iat: number;
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+// -- Service
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
   private readonly ACCESS_KEY  = 'booker_token';
   private readonly REFRESH_KEY = 'booker_refresh';
+  private readonly USER_KEY    = 'booker_user';
   private readonly api         = environment.apiUrl;
 
   private readonly http   = inject(HttpClient);
   private readonly router = inject(Router);
 
-  private readonly _user$ = new BehaviorSubject<AuthUser | null>(null);
+  verifySession(): Observable<AuthUser | null> {
+    const token = this.getAccessToken();
+    if (!token) return of(null);
 
-  /** Emits the currently authenticated user, or null when logged out. */
-  readonly user$            = this._user$.asObservable();
-  readonly isAuthenticated$ = this._user$.pipe(map(u => u !== null));
+    const payload = this.decodePayload(token);
+    if (!payload || payload.exp * 1000 <= Date.now()) {
+      this.clearSession();
+      return of(null);
+    }
 
-  constructor() {
-    // Restore state from a stored access token (e.g. after page refresh)
-    this.hydrateFromStorage();
+    return this.http
+      .get<{ id: number; email: string; fullName: string; role: string }>(`${this.api}/auth/me`)
+      .pipe(
+        map(u => {
+          const user: AuthUser = { id: u.id, email: u.email, fullName: u.fullName, roles: [u.role] };
+          localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+          return user;
+        }),
+        catchError(() => { this.clearSession(); return of(null); }),
+      );
   }
 
-  // ── Auth operations ─────────────────────────────────────────────────────────
-
-  login(email: string, password: string): Observable<void> {
+  login(email: string, password: string): Observable<AuthUser> {
     return this.http
       .post<AuthResponse>(`${this.api}/auth/login`, { username: email, password })
-      .pipe(
-        tap(res => this.storeTokens(res)),
-        map(() => void 0)
-      );
+      .pipe(map(res => this.storeTokens(res)));
   }
 
-  register(req: RegisterRequest): Observable<void> {
+  register(req: RegisterRequest): Observable<AuthUser> {
     return this.http
       .post<AuthResponse>(`${this.api}/auth/register`, req)
-      .pipe(
-        tap(res => this.storeTokens(res)),
-        map(() => void 0)
-      );
+      .pipe(map(res => this.storeTokens(res)));
   }
 
   logout(): void {
     const refreshToken = this.getRefreshToken();
     if (refreshToken) {
-      // Fire-and-forget: revoke on backend; don't block local cleanup on error
-      this.http
-        .post(`${this.api}/auth/logout`, { refreshToken })
+      this.http.post(`${this.api}/auth/logout`, { refreshToken })
         .pipe(catchError(() => throwError(() => null)))
         .subscribe({ error: () => {} });
     }
@@ -99,27 +101,14 @@ export class AuthService {
 
   refreshToken(): Observable<void> {
     const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      this.clearSession();
-      return throwError(() => new Error('No refresh token'));
-    }
+    if (!refreshToken) { this.clearSession(); return throwError(() => new Error('No refresh token')); }
     return this.http
       .post<AuthResponse>(`${this.api}/auth/refresh`, { refreshToken })
-      .pipe(
-        tap(res => this.storeTokens(res)),
-        map(() => void 0)
-      );
+      .pipe(map(res => { this.storeTokens(res); }));
   }
 
-  // ── Token access ────────────────────────────────────────────────────────────
-
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_KEY);
-  }
+  getAccessToken(): string | null { return localStorage.getItem(this.ACCESS_KEY); }
+  getRefreshToken(): string | null { return localStorage.getItem(this.REFRESH_KEY); }
 
   isAuthenticated(): boolean {
     const token = this.getAccessToken();
@@ -128,52 +117,24 @@ export class AuthService {
     return !!payload && payload.exp * 1000 > Date.now();
   }
 
-  // ── Role helpers ────────────────────────────────────────────────────────────
-
-  hasRole(role: string): boolean {
-    return this._user$.value?.roles.includes(role) ?? false;
-  }
-
-  hasAnyRole(...roles: string[]): boolean {
-    return roles.some(r => this.hasRole(r));
-  }
-
-  // ── Private helpers ─────────────────────────────────────────────────────────
-
-  private storeTokens(res: AuthResponse): void {
-    localStorage.setItem(this.ACCESS_KEY, res.accessToken);
-    localStorage.setItem(this.REFRESH_KEY, res.refreshToken);
-    this.hydrateFromStorage();
-  }
-
-  private clearSession(): void {
+  clearSession(): void {
     localStorage.removeItem(this.ACCESS_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
-    this._user$.next(null);
+    localStorage.removeItem(this.USER_KEY);
   }
 
-  private hydrateFromStorage(): void {
-    const token = this.getAccessToken();
-    if (!token) { this._user$.next(null); return; }
-    const payload = this.decodePayload(token);
-    if (!payload || payload.exp * 1000 <= Date.now()) {
-      this.clearSession();
-      return;
-    }
-    this._user$.next({
-      id:       payload.userId,
-      email:    payload.email ?? payload.sub,
-      fullName: payload.fullName ?? '',
-      roles:    payload.roles ?? [],
-    });
+  private storeTokens(res: AuthResponse): AuthUser {
+    localStorage.setItem(this.ACCESS_KEY, res.accessToken);
+    localStorage.setItem(this.REFRESH_KEY, res.refreshToken);
+    const user: AuthUser = { id: res.user.id, email: res.user.email, fullName: res.user.fullName, roles: [res.user.role] };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    return user;
   }
 
   private decodePayload(token: string): JwtPayload | null {
     try {
       const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
       return JSON.parse(atob(base64)) as JwtPayload;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 }

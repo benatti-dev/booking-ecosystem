@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
+import { Store } from '@ngrx/store';
+import { selectUser } from '../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,5 +12,6 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
-  protected readonly auth = inject(AuthService);
+  private readonly store = inject(Store);
+  readonly user$ = this.store.select(selectUser);
 }
