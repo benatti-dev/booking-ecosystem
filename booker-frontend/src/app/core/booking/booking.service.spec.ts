@@ -252,7 +252,7 @@ describe('BookingService', () => {
 
   describe('getBusinessBookings()', () => {
     it('should GET /bookings/business/{id} with pagination', () => {
-      service.getBusinessBookings(2, 0, 5).subscribe(res => {
+      service.getBusinessBookings(2, undefined, undefined, 0, 5).subscribe(res => {
         expect(res.content.length).toBe(1);
         expect(res.content[0].businessId).toBe(2);
       });
@@ -264,6 +264,18 @@ describe('BookingService', () => {
       );
       expect(req.request.method).toBe('GET');
       req.flush(mockPage([mockBooking]));
+    });
+
+    it('should include from/to params when provided', () => {
+      service.getBusinessBookings(2, '2026-06-01T00:00:00Z', '2026-06-30T23:59:59Z').subscribe();
+
+      const req = http.expectOne(r =>
+        r.url === `${API}/bookings/business/2` &&
+        r.params.get('from') === '2026-06-01T00:00:00Z' &&
+        r.params.get('to') === '2026-06-30T23:59:59Z'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockPage([]));
     });
   });
 

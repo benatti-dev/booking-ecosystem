@@ -6,6 +6,8 @@ import com.booker.business.entity.BusinessCategory;
 import com.booker.business.repository.BusinessCategoryRepository;
 import com.booker.shared.exception.BookerException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class BusinessCategoryService {
 
     private final BusinessCategoryRepository categoryRepository;
 
+    @Cacheable("businessCategories")
     @Transactional(readOnly = true)
     public List<CategoryResponse> listAll() {
         return categoryRepository.findAll().stream().map(this::toResponse).toList();
@@ -27,6 +30,7 @@ public class BusinessCategoryService {
         return toResponse(findOrThrow(id));
     }
 
+    @CacheEvict(value = "businessCategories", allEntries = true)
     @Transactional
     public CategoryResponse create(CreateCategoryRequest req) {
         if (categoryRepository.existsByName(req.name())) {
