@@ -1,0 +1,92 @@
+<div class="space-y-4">
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 items-end">
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Role</label>
+      <select [(ngModel)]="filterRole" (change)="applyFilters()"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-300">
+        @for (opt of roleOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Status</label>
+      <select [(ngModel)]="filterStatus" (change)="applyFilters()"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-300">
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+    <p class="text-sm text-gray-500 ml-auto self-center">{{ total }} user(s)</p>
+  </div>
+
+  @if (loading) {
+    <app-loading-spinner />
+  }
+  @if (error) {
+    <app-alert type="error" [message]="error" />
+  }
+
+  @if (!loading && users.length === 0 && !error) {
+    <app-empty-state icon="👥" title="No users match the selected filters." />
+  }
+
+  <!-- Users table -->
+  @if (!loading && users.length) {
+    <div class="bg-white rounded-xl border border-gray-100 shadow overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <tr>
+            <th class="px-4 py-3 text-left">User</th>
+            <th class="px-4 py-3 text-left">Role</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Joined</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (user of users; track user.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3">
+                <p class="font-medium text-gray-900">{{ user.fullName }}</p>
+                <p class="text-gray-400 text-xs">{{ user.email }}</p>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <app-status-badge [status]="user.status" />
+              </td>
+              <td class="px-4 py-3 text-gray-500">
+                {{ user.createdAt | dateTime }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                @if (user.role !== 'ADMIN') {
+                  <button (click)="toggleStatus(user)"
+                    [class]="user.status === 'ACTIVE'
+                      ? 'px-3 py-1 text-xs rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 font-medium'
+                      : 'px-3 py-1 text-xs rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-medium'">
+                    {{ user.status === 'ACTIVE' ? 'Suspend' : 'Restore' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <app-pagination
+        [page]="currentPage"
+        [totalPages]="totalPages"
+        (pageChange)="onPageChange($event)" />
+    }
+  }
+
+</div>

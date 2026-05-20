@@ -1,63 +1,22 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { Subscription } from 'rxjs';
-import { BusinessResponse } from '../../core/business/business.service';
-import { BusinessActions } from '../../store/business/business.actions';
-import {
-  selectPendingApprovals,
-  selectLoadingPending,
-  selectErrorPending,
-} from '../../store/business/business.selectors';
+import { Component } from '@angular/core';
 
+/**
+ * Admin shell component — renders the side-tab navigation and a <router-outlet>
+ * for child routes (overview, approvals, users, audit-logs).
+ */
 @Component({
   selector: 'app-admin',
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
   standalone: false,
 })
-export class AdminComponent implements OnInit, OnDestroy {
-  pending: BusinessResponse[] = [];
-  loading = false;
-  error: string | null = null;
+export class AdminComponent {
 
-  /** When set, shows the inline reject reason input for that business id. */
-  rejectingId = signal<number | null>(null);
-  rejectReason = signal('');
-
-  private sub = new Subscription();
-
-  constructor(private readonly store: Store) {}
-
-  ngOnInit(): void {
-    this.store.dispatch(BusinessActions.loadPendingBusinesses());
-    this.sub.add(this.store.select(selectPendingApprovals).subscribe(v => (this.pending = v ?? [])));
-    this.sub.add(this.store.select(selectLoadingPending).subscribe(v => (this.loading = v)));
-    this.sub.add(this.store.select(selectErrorPending).subscribe(v => (this.error = v)));
-  }
-
-  approve(id: number): void {
-    this.store.dispatch(BusinessActions.changeBusinessStatus({ id, status: 'ACTIVE' }));
-  }
-
-  startReject(id: number): void {
-    this.rejectingId.set(id);
-    this.rejectReason.set('');
-  }
-
-  cancelReject(): void {
-    this.rejectingId.set(null);
-  }
-
-  confirmReject(id: number): void {
-    this.store.dispatch(BusinessActions.changeBusinessStatus({
-      id,
-      status: 'REJECTED',
-      reason: this.rejectReason() || undefined,
-    }));
-    this.rejectingId.set(null);
-  }
-
-  ngOnDestroy(): void {
-    this.sub.unsubscribe();
-  }
+  readonly tabs = [
+    { label: 'Overview',       path: 'overview',   icon: '📊' },
+    { label: 'Approvals',      path: 'approvals',  icon: '✅' },
+    { label: 'Users',          path: 'users',       icon: '👥' },
+    { label: 'Audit Logs',     path: 'audit-logs', icon: '🗒️' },
+  ];
 }
+

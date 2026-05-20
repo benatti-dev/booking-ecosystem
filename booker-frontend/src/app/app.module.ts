@@ -24,6 +24,9 @@ import { BusinessEffects } from './store/business/business.effects';
 import { bookingReducer } from './store/booking/booking.reducer';
 import { BookingEffects } from './store/booking/booking.effects';
 
+import { adminFeature } from './store/admin/admin.reducer';
+import { AdminEffects } from './store/admin/admin.effects';
+
 @NgModule({
   declarations: [App],
   imports: [
@@ -36,8 +39,9 @@ import { BookingEffects } from './store/booking/booking.effects';
     EffectsModule.forRoot([]),
     StoreModule.forFeature(authFeature),
     StoreModule.forFeature(businessFeature),
+    StoreModule.forFeature(adminFeature),
     StoreModule.forFeature('booking', bookingReducer),
-    EffectsModule.forFeature([AuthEffects, BusinessEffects, BookingEffects]),
+    EffectsModule.forFeature([AuthEffects, BusinessEffects, BookingEffects, AdminEffects]),
     StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: !isDevMode() }),
   ],
   providers: [

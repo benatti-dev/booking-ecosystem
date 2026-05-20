@@ -15,3 +15,4 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
     Page<AuditLog> findByCreatedAtBetween(Instant from, Instant to, Pageable pageable);
 }
+

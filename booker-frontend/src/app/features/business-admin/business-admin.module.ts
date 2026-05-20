@@ -13,6 +13,7 @@ import { BookingCalendarComponent } from './booking-calendar/booking-calendar.co
 import { EmployeeListComponent } from './employee-list/employee-list.component';
 import { EmployeeFormComponent } from './employee-form/employee-form.component';
 import { EmployeeScheduleComponent } from './employee-schedule/employee-schedule.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { EmployeeScheduleComponent } from './employee-schedule/employee-schedule
     EmployeeListComponent,
     EmployeeFormComponent,
     EmployeeScheduleComponent,
+    AnalyticsComponent,
   ],
   imports: [SharedModule, BusinessAdminRoutingModule],
 })

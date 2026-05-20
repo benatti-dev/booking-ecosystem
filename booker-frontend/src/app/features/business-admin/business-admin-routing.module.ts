@@ -9,6 +9,7 @@ import { BookingCalendarComponent } from './booking-calendar/booking-calendar.co
 import { EmployeeListComponent } from './employee-list/employee-list.component';
 import { EmployeeFormComponent } from './employee-form/employee-form.component';
 import { EmployeeScheduleComponent } from './employee-schedule/employee-schedule.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
 
 const routes: Routes = [
   {
@@ -24,6 +25,7 @@ const routes: Routes = [
       { path: ':businessId/employees', component: EmployeeListComponent },
       { path: ':businessId/employees/new', component: EmployeeFormComponent },
       { path: ':businessId/employees/:employeeId/schedule', component: EmployeeScheduleComponent },
+      { path: ':businessId/analytics', component: AnalyticsComponent },
     ],
   },
 ];

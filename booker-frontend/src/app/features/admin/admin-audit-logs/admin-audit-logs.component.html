@@ -1,0 +1,90 @@
+<div class="space-y-4">
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 items-end">
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Action</label>
+      <select [(ngModel)]="filterAction"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-300">
+        @for (action of knownActions; track action) {
+          <option [value]="action">{{ action || 'All actions' }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">From</label>
+      <input type="date" [(ngModel)]="filterFrom"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-300" />
+    </div>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">To</label>
+      <input type="date" [(ngModel)]="filterTo"
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-300" />
+    </div>
+    <button (click)="applyFilters()"
+      class="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 font-medium">
+      Apply
+    </button>
+    <button (click)="resetFilters()"
+      class="px-4 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+      Reset
+    </button>
+    <p class="text-sm text-gray-500 ml-auto self-center">{{ total }} entry(s)</p>
+  </div>
+
+  @if (loading) {
+    <app-loading-spinner />
+  }
+  @if (error) {
+    <app-alert type="error" [message]="error" />
+  }
+
+  @if (!loading && logs.length === 0 && !error) {
+    <app-empty-state icon="🗒️" title="No audit log entries match the filters." />
+  }
+
+  @if (!loading && logs.length) {
+    <div class="bg-white rounded-xl border border-gray-100 shadow overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <tr>
+            <th class="px-4 py-3 text-left">Timestamp</th>
+            <th class="px-4 py-3 text-left">Action</th>
+            <th class="px-4 py-3 text-left">User ID</th>
+            <th class="px-4 py-3 text-left">IP Address</th>
+            <th class="px-4 py-3 text-left">Details</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 font-mono text-xs">
+          @for (log of logs; track log.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                {{ log.createdAt | dateTime }}
+              </td>
+              <td class="px-4 py-3">
+                <span [class]="actionBadgeClass(log.action)">{{ log.action }}</span>
+              </td>
+              <td class="px-4 py-3 text-gray-500">
+                {{ log.userId ?? '—' }}
+              </td>
+              <td class="px-4 py-3 text-gray-500">
+                {{ log.ipAddress ?? '—' }}
+              </td>
+              <td class="px-4 py-3 text-gray-400 max-w-xs truncate" [title]="log.details ?? ''">
+                {{ log.details ?? '—' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <app-pagination
+        [page]="currentPage"
+        [totalPages]="totalPages"
+        (pageChange)="onPageChange($event)" />
+    }
+  }
+
+</div>

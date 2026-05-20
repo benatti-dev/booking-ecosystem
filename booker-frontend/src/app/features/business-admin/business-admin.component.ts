@@ -47,6 +47,7 @@ export class BusinessAdminComponent implements OnInit, OnDestroy {
         { label: 'Services',      icon: '🛠️', path: `/business/${id}/services` },
         { label: 'Bookings',      icon: '📅', path: `/business/${id}/bookings` },
         { label: 'Employees',     icon: '👥', path: `/business/${id}/employees` },
+        { label: 'Analytics',     icon: '📊', path: `/business/${id}/analytics` },
       ];
     } else {
       this.navItems = [

@@ -1,0 +1,78 @@
+@if (loading) {
+  <app-loading-spinner />
+}
+@if (error) {
+  <app-alert type="error" [message]="error" />
+}
+
+@if (overview) {
+  <div class="space-y-8">
+
+    <!-- KPI grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Businesses</p>
+        <p class="text-3xl font-bold text-gray-900">{{ totalBusinesses }}</p>
+        <div class="mt-2 flex gap-2 flex-wrap">
+          <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+            {{ overview.totalBusinessesActive }} active
+          </span>
+          <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+            {{ overview.totalBusinessesPending }} pending
+          </span>
+          <span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+            {{ overview.totalBusinessesSuspended }} suspended
+          </span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Users</p>
+        <p class="text-3xl font-bold text-gray-900">{{ totalUsers }}</p>
+        <div class="mt-2 flex gap-2 flex-wrap">
+          <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            {{ overview.totalClients }} clients
+          </span>
+          <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+            {{ overview.totalBusinessOwners }} owners
+          </span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Bookings (30 days)</p>
+        <p class="text-3xl font-bold text-gray-900">{{ overview.bookingsLast30Days }}</p>
+        <p class="text-sm text-gray-500 mt-1">
+          {{ overview.completedBookingsLast30Days }} completed
+        </p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenue (30 days)</p>
+        <p class="text-3xl font-bold text-emerald-600">
+          ${{ overview.revenueLast30Days | number:'1.2-2' }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">from completed bookings</p>
+      </div>
+    </div>
+
+    <!-- Growth row -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5 flex items-center gap-4">
+        <span class="text-3xl">👤</span>
+        <div>
+          <p class="text-2xl font-bold text-gray-900">{{ overview.newUsersLast7Days }}</p>
+          <p class="text-sm text-gray-500">new users in the last 7 days</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow p-5 flex items-center gap-4">
+        <span class="text-3xl">🏢</span>
+        <div>
+          <p class="text-2xl font-bold text-gray-900">{{ overview.newBusinessesLast7Days }}</p>
+          <p class="text-sm text-gray-500">new businesses in the last 7 days</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+}
