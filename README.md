@@ -37,16 +37,6 @@ The platform is engineered as a **modular monolith** with clean module boundarie
 
 ---
 
-## 📸 Screenshots
-
-> _Screenshots coming soon. Run the app locally with `docker compose up` to see it in action._
-
-| Search | Booking Flow | Business Dashboard | Admin Panel |
-|---|---|---|---|
-| ![search](docs/screenshots/search.png) | ![booking](docs/screenshots/booking.png) | ![dashboard](docs/screenshots/dashboard.png) | ![admin](docs/screenshots/admin.png) |
-
----
-
 ## ✨ Features
 
 ### Core Booking Engine
@@ -400,9 +390,19 @@ Contributions are welcome. Please follow the workflow below:
 
 ---
 
-## 📄 License
+## 📸 Screenshots
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+### Search
+![search](docs/screenshots/search.png)
+
+### Booking Flow
+![booking](docs/screenshots/booking.png)
+
+### Business Dashboard
+![dashboard](docs/screenshots/dashboard.png)
+
+### Admin Panel
+![admin](docs/screenshots/admin.png)
 
 ---
 
