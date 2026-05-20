@@ -1,0 +1,106 @@
+<!-- Calendar header: prev / Month Year / next -->
+<div class="flex items-center justify-between mb-4">
+  <button
+    type="button"
+    class="nav-btn"
+    [class.nav-btn--disabled]="!canGoBack()"
+    [disabled]="!canGoBack()"
+    (click)="prevMonth()"
+    aria-label="Previous month"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  </button>
+
+  <h3 class="text-sm font-semibold text-gray-800">{{ monthLabel() }}</h3>
+
+  <button
+    type="button"
+    class="nav-btn"
+    (click)="nextMonth()"
+    aria-label="Next month"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  </button>
+</div>
+
+<!-- Day-of-week header row -->
+<div class="cal-grid mb-1" role="row" aria-hidden="true">
+  @for (day of weekDays; track day) {
+    <div class="cal-header">{{ day }}</div>
+  }
+</div>
+
+<!-- Calendar day grid -->
+<div role="grid" [attr.aria-label]="'Calendar, ' + monthLabel()">
+  @for (week of calendarWeeks(); track trackByWeek($index)) {
+    <div class="cal-grid" role="row">
+      @for (day of week; track trackByDay($index, day)) {
+        <button
+          type="button"
+          role="gridcell"
+          class="cal-day"
+          [class.cal-day--other-month]="!day.isCurrentMonth"
+          [class.cal-day--past]="day.isPast && !day.isToday"
+          [class.cal-day--today]="day.isToday"
+          [class.cal-day--selected]="day.isSelected && !day.isToday"
+          [class.cal-day--today-selected]="day.isToday && day.isSelected"
+          [disabled]="day.isPast || !day.isCurrentMonth"
+          [attr.aria-label]="day.date | date:'EEEE, MMMM d'"
+          [attr.aria-pressed]="day.isSelected"
+          [attr.aria-current]="day.isToday ? 'date' : null"
+          (click)="selectDate(day)"
+        >
+          {{ day.dayNum }}
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<!-- Divider -->
+<div class="border-t border-gray-100 my-4"></div>
+
+<!-- Time slots -->
+@if (!serviceId) {
+  <!-- Prompt: select a service first -->
+  <p class="text-center text-gray-400 text-xs py-3">Select a service to see available times</p>
+} @else if (slotsLoading()) {
+  <!-- Loading skeleton -->
+  <div class="slots-grid" aria-busy="true" aria-label="Loading time slots">
+    @for (s of skeletonSlots; track $index) {
+      <div class="slot-skeleton"></div>
+    }
+  </div>
+} @else if (timeSlots().length === 0) {
+  <!-- No slots -->
+  <div class="flex flex-col items-center py-4 gap-2">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      class="text-gray-300" stroke-width="1.5" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="8" y1="12" x2="16" y2="12" stroke-width="2" />
+    </svg>
+    <p class="text-gray-400 text-xs text-center">No available slots for this day.<br>Try another date.</p>
+  </div>
+} @else {
+  <!-- Available time slots -->
+  <div class="slots-grid" role="listbox" aria-label="Available time slots">
+    @for (slot of timeSlots(); track trackBySlot($index, slot)) {
+      <button
+        type="button"
+        role="option"
+        class="slot-btn"
+        [class.slot-btn--selected]="slot.isSelected"
+        [attr.aria-selected]="slot.isSelected"
+        (click)="selectSlot(slot)"
+      >
+        {{ slot.display }}
+      </button>
+    }
+  </div>
+}

@@ -1,0 +1,41 @@
+<button
+  type="button"
+  class="service-card"
+  [class.is-selected]="isSelected"
+  (click)="onSelect()"
+  [attr.aria-pressed]="isSelected"
+  [attr.aria-label]="service.name + ', ' + formattedPrice + ', ' + service.durationMin + ' minutes'"
+>
+  <!-- Selected checkmark badge -->
+  @if (isSelected) {
+    <span class="checkmark" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  }
+
+  <!-- Service name -->
+  <h3 class="font-semibold text-gray-900 text-sm leading-snug pr-7 mb-1">{{ service.name }}</h3>
+
+  <!-- Description -->
+  @if (service.description) {
+    <p class="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-3">{{ service.description }}</p>
+  } @else {
+    <div class="mb-3"></div>
+  }
+
+  <!-- Footer: duration + price -->
+  <div class="flex items-center justify-between gap-2 mt-auto">
+    <span class="flex items-center gap-1 text-gray-400 text-xs">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+      {{ service.durationMin }} min
+    </span>
+    <span class="text-indigo-600 font-bold text-sm">{{ formattedPrice }}</span>
+  </div>
+</button>

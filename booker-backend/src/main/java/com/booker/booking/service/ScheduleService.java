@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -144,9 +146,19 @@ public class ScheduleService {
     }
 
     private List<ScheduleRuleDto> toRuleDtos(List<ScheduleRule> rules) {
+        if (rules.isEmpty()) return List.of();
+
+        // Batch-fetch all breaks for all rules in a single query (prevents N+1)
+        List<Long> ruleIds = rules.stream().map(ScheduleRule::getId).toList();
+        Map<Long, List<ScheduleBreak>> breaksByRuleId = breakRepository
+                .findByScheduleRuleIdIn(ruleIds)
+                .stream()
+                .collect(Collectors.groupingBy(b -> b.getScheduleRule().getId()));
+
         return rules.stream().map(r -> {
-            List<ScheduleBreak> breaks = breakRepository.findByScheduleRuleId(r.getId());
-            List<ScheduleBreakDto> breakDtos = breaks.stream()
+            List<ScheduleBreakDto> breakDtos = breaksByRuleId
+                    .getOrDefault(r.getId(), List.of())
+                    .stream()
                     .map(b -> new ScheduleBreakDto(b.getId(), b.getStartTime(), b.getEndTime()))
                     .toList();
             return new ScheduleRuleDto(r.getId(), r.getDayOfWeek(), r.getStartTime(), r.getEndTime(),

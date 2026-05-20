@@ -42,4 +42,16 @@ public class ScheduleOverride {
 
     @Column(length = 255)
     private String reason;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ScheduleOverride other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

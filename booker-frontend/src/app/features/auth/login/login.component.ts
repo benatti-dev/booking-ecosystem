@@ -1,32 +1,36 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { AuthActions } from '../../../store/auth/auth.actions';
 import { selectAuthLoading, selectAuthError } from '../../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, NgIf, AsyncPipe],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
+  standalone: false,
 })
-export class LoginComponent implements OnInit {
-  private readonly fb    = inject(FormBuilder);
-  private readonly store = inject(Store);
-
-  readonly loading$ = this.store.select(selectAuthLoading);
-  readonly error$   = this.store.select(selectAuthError);
+export class LoginComponent implements OnInit, OnDestroy {
+  loading = false;
+  error: string | null = null;
 
   protected readonly form = this.fb.group({
     email:    ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]]
+    password: ['', [Validators.required]],
   });
+
+  private sub = new Subscription();
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly store: Store,
+  ) {}
 
   ngOnInit(): void {
     this.store.dispatch(AuthActions.clearError());
+    this.sub.add(this.store.select(selectAuthLoading).subscribe(v => (this.loading = v)));
+    this.sub.add(this.store.select(selectAuthError).subscribe(v => (this.error = v)));
   }
 
   protected isInvalid(field: string): boolean {
@@ -38,5 +42,9 @@ export class LoginComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const { email, password } = this.form.value;
     this.store.dispatch(AuthActions.login({ email: email!, password: password! }));
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

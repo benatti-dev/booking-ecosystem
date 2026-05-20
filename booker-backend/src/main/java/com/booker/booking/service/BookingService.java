@@ -9,7 +9,9 @@ import com.booker.booking.entity.Booking;
 import com.booker.booking.entity.BookingCancellation;
 import com.booker.booking.entity.BookingStatus;
 import com.booker.booking.event.BookingCancelledEvent;
+import com.booker.booking.event.BookingCompletedEvent;
 import com.booker.booking.event.BookingConfirmedEvent;
+import com.booker.booking.event.BookingCreatedEvent;
 import com.booker.booking.repository.BookingCancellationRepository;
 import com.booker.booking.repository.BookingRepository;
 import com.booker.business.entity.BookableResource;
@@ -69,15 +71,18 @@ public class BookingService {
 
         if (req.employeeId() != null) {
             employee = employeeRepository.findById(req.employeeId()).orElseThrow();
-            lockTarget = req.employeeId();
         } else {
             resource = resourceRepository.findById(req.resourceId())
                     .orElseThrow(() -> BookerException.notFound("Resource not found: " + req.resourceId()));
-            lockTarget = req.resourceId();
         }
 
-        // Acquire PostgreSQL advisory lock to serialize concurrent bookings
-        boolean locked = acquireAdvisoryLock(lockTarget);
+        // Acquire PostgreSQL advisory lock to serialize concurrent bookings.
+        // Namespace: bit 62 distinguishes employees (0) from resources (1)
+        // to prevent key collisions between the two separate ID sequences.
+        long lockKey = req.employeeId() != null
+                ? req.employeeId()
+                : req.resourceId() | (1L << 62);
+        boolean locked = acquireAdvisoryLock(lockKey);
         if (!locked) {
             throw BookerException.conflict("Slot temporarily unavailable, please try again");
         }
@@ -106,6 +111,16 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
         // Lock released automatically on transaction commit
+        eventPublisher.publishEvent(new BookingCreatedEvent(
+                saved.getId(),
+                client.getId(),
+                client.getEmail(),
+                client.getFullName(),
+                business.getId(),
+                business.getOwner() != null ? business.getOwner().getId() : null,
+                service.getName(),
+                saved.getStartTime()
+        ));
 
         return toResponse(saved);
     }
@@ -148,7 +163,14 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.CONFIRMED);
         Booking saved = bookingRepository.save(booking);
-        eventPublisher.publishEvent(new BookingConfirmedEvent(saved));
+        eventPublisher.publishEvent(new BookingConfirmedEvent(
+                saved.getId(),
+                saved.getClient().getId(),
+                saved.getClient().getEmail(),
+                saved.getBusiness().getOwner() != null ? saved.getBusiness().getOwner().getId() : null,
+                saved.getService().getName(),
+                saved.getStartTime()
+        ));
         return toResponse(saved);
     }
 
@@ -183,7 +205,15 @@ public class BookingService {
                 .build();
         cancellationRepository.save(cancellation);
 
-        eventPublisher.publishEvent(new BookingCancelledEvent(saved, req != null ? req.reason() : null));
+        eventPublisher.publishEvent(new BookingCancelledEvent(
+                saved.getId(),
+                saved.getClient().getId(),
+                saved.getClient().getEmail(),
+                saved.getBusiness().getOwner() != null ? saved.getBusiness().getOwner().getId() : null,
+                saved.getService().getName(),
+                saved.getStartTime(),
+                req != null ? req.reason() : null
+        ));
         return toResponse(saved);
     }
 
@@ -196,12 +226,21 @@ public class BookingService {
             throw BookerException.badRequest("Only CONFIRMED bookings can be completed");
         }
         booking.setStatus(BookingStatus.COMPLETED);
-        return toResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        eventPublisher.publishEvent(new BookingCompletedEvent(
+                saved.getId(),
+                saved.getClient().getId(),
+                saved.getClient().getEmail(),
+                saved.getBusiness().getOwner() != null ? saved.getBusiness().getOwner().getId() : null,
+                saved.getService().getName(),
+                saved.getStartTime()
+        ));
+        return toResponse(saved);
     }
 
     // ── Advisory Lock ─────────────────────────────────────────────
 
-    private boolean acquireAdvisoryLock(Long key) {
+    private boolean acquireAdvisoryLock(long key) {
         List<?> result = entityManager.createNativeQuery(
                 "SELECT pg_try_advisory_xact_lock(:key)")
                 .setParameter("key", key)
@@ -242,15 +281,21 @@ public class BookingService {
         User actor = (User) auth.getPrincipal();
         if (actor.getRole() == UserRole.ADMIN) return;
         if (booking.getBusiness().getOwner().getId().equals(actor.getId())) return;
-        // Employee of this business can also access
-        if (actor.getRole() == UserRole.EMPLOYEE) return; // simplified; full check would match employee record
+        if (actor.getRole() == UserRole.EMPLOYEE) {
+            // Verify the employee record belongs to this booking's business
+            if (!employeeRepository.existsByUserIdAndBusinessId(
+                    actor.getId(), booking.getBusiness().getId())) {
+                throw BookerException.forbidden("Access denied");
+            }
+            return;
+        }
         throw BookerException.forbidden("Access denied");
     }
 
     // ── Mapper ────────────────────────────────────────────────────
 
     private Booking findOrThrow(Long id) {
-        return bookingRepository.findById(id)
+        return bookingRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> BookerException.notFound("Booking not found: " + id));
     }
 

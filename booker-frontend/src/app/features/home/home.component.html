@@ -1,41 +1,151 @@
-<div class="max-w-7xl mx-auto px-4 py-16 text-center">
-  <h1 class="text-4xl font-bold text-gray-900 mb-4">
-    Book any service,<br class="hidden sm:block" /> anywhere
-  </h1>
-  <p class="text-lg text-gray-500 mb-10 max-w-xl mx-auto">
-    Discover beauty salons, gyms, clinics and more — and book your appointment in seconds.
-  </p>
-  <div class="flex gap-3 justify-center">
-    <a routerLink="/register"
-       class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-xl transition-colors">
-      Get started
-    </a>
-    <a routerLink="/login"
-       class="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-xl transition-colors">
-      Sign in
-    </a>
+<div class="max-w-7xl mx-auto px-4 py-12">
+
+  <!-- Hero -->
+  <div class="text-center mb-10">
+    <h1 class="text-4xl font-bold text-gray-900 mb-3">
+      Book any service,<br class="hidden sm:block" /> anywhere
+    </h1>
+    <p class="text-lg text-gray-500 max-w-xl mx-auto">
+      Discover beauty salons, gyms, clinics and more — and book your appointment in seconds.
+    </p>
   </div>
 
-  <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
-    <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
-      <div class="text-2xl mb-2">💇</div>
-      <p class="font-semibold text-gray-800">Beauty Salons</p>
-      <p class="text-xs text-gray-400 mt-1">Haircuts, styling, care</p>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
-      <div class="text-2xl mb-2">🏋️</div>
-      <p class="font-semibold text-gray-800">Gyms & Sports</p>
-      <p class="text-xs text-gray-400 mt-1">Workouts, courts, pools</p>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
-      <div class="text-2xl mb-2">🏥</div>
-      <p class="font-semibold text-gray-800">Medical</p>
-      <p class="text-xs text-gray-400 mt-1">Doctors, dentists, labs</p>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer">
-      <div class="text-2xl mb-2">🔧</div>
-      <p class="font-semibold text-gray-800">Auto Services</p>
-      <p class="text-xs text-gray-400 mt-1">Repair, diagnostics, wash</p>
-    </div>
-  </div>
-</div>
+  <!-- Search bar -->
+  <div class="max-w-2xl mx-auto mb-8">
+    <div class="flex gap-2 bg-white border border-gray-300 rounded-2xl shadow-sm px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+      <svg class="w-5 h-5 text-gray-400 mt-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="search()"
+          type="text"
+          placeholder="Search businesses..."
+          class="flex-1 outline-none text-gray-800 placeholder-gray-400 py-2 bg-transparent"
+          />
+          <button
+            (click)="search()"
+            class="btn-primary btn-sm">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Category chips -->
+      <div class="flex flex-wrap gap-2 justify-center mb-10">
+        @for (cat of categories; track cat) {
+          <button
+            (click)="selectCategory(cat.id)"
+      [ngClass]="{
+        'bg-blue-600 text-white border-blue-600': selectedCategoryId === cat.id,
+        'bg-white text-gray-700 border-gray-200 hover:border-blue-400': selectedCategoryId !== cat.id
+      }"
+            class="flex items-center gap-1.5 border px-3 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer">
+            <span>{{ categoryIcons[cat.name] || '🏢' }}</span>
+            {{ cat.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Business results -->
+      @if (searched) {
+        @if (loading) {
+          <div class="text-center text-gray-400 py-16">
+            <div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+            Searching...
+          </div>
+        }
+        @if (!loading && businesses.length === 0) {
+          <div
+            class="text-center text-gray-500 py-16">
+            <p class="text-lg font-medium mb-1">No businesses found</p>
+            <p class="text-sm">Try a different search term or category.</p>
+          </div>
+        }
+        @if (!loading && businesses.length > 0) {
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @for (b of businesses; track b.id) {
+              <div
+                class="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition-shadow flex flex-col gap-3">
+                <!-- Logo + category -->
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl flex-shrink-0">
+                      {{ categoryIcons[b.categoryName] || '🏢' }}
+                    </div>
+                    <div>
+                      <p class="font-semibold text-gray-900 leading-tight">{{ b.name }}</p>
+                      <p class="text-xs text-blue-600 font-medium mt-0.5">{{ b.categoryLabel }}</p>
+                    </div>
+                  </div>
+                  @if (b.distanceMeters != null) {
+                    <span
+                      class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full flex-shrink-0">
+                      {{ b.distanceMeters | distance }}
+                    </span>
+                  }
+                </div>
+                <!-- Description -->
+                @if (b.description) {
+                  <p class="text-sm text-gray-500 line-clamp-2">{{ b.description }}</p>
+                }
+                <!-- Location -->
+                <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                      </svg>
+                      {{ b.city }}{{ b.address ? ', ' + b.address : '' }}
+                    </div>
+                    <!-- Book button -->
+                    <a [routerLink]="['/business', b.id]"
+                      class="btn-primary btn-sm mt-auto text-center">
+                      Book Now
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Default tiles (before any search) -->
+          @if (!searched) {
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+              <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                (click)="selectCategory(getCategoryId('beauty_salon'))">
+                <div class="text-2xl mb-2">💇</div>
+                <p class="font-semibold text-gray-800">Beauty Salons</p>
+                <p class="text-xs text-gray-400 mt-1">Haircuts, styling, care</p>
+              </div>
+              <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                (click)="selectCategory(getCategoryId('fitness_gym'))">
+                <div class="text-2xl mb-2">🏋️</div>
+                <p class="font-semibold text-gray-800">Gyms & Sports</p>
+                <p class="text-xs text-gray-400 mt-1">Workouts, courts, pools</p>
+              </div>
+              <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                (click)="selectCategory(getCategoryId('medical_clinic'))">
+                <div class="text-2xl mb-2">🏥</div>
+                <p class="font-semibold text-gray-800">Medical</p>
+                <p class="text-xs text-gray-400 mt-1">Doctors, dentists, labs</p>
+              </div>
+              <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                (click)="selectCategory(getCategoryId('car_service'))">
+                <div class="text-2xl mb-2">🔧</div>
+                <p class="font-semibold text-gray-800">Auto Services</p>
+                <p class="text-xs text-gray-400 mt-1">Repair, diagnostics, wash</p>
+              </div>
+            </div>
+            <div class="mt-10 text-center">
+              <a routerLink="/register"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-xl transition-colors inline-block">
+                Get started
+              </a>
+            </div>
+          }
+
+        </div>

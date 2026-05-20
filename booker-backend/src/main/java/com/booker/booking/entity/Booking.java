@@ -88,8 +88,15 @@ public class Booking {
     @Builder.Default
     private Instant updatedAt = Instant.now();
 
-    @PreUpdate
-    void onUpdate() {
-        this.updatedAt = Instant.now();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Booking other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

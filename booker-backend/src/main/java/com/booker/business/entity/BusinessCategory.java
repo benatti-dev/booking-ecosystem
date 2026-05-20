@@ -29,4 +29,16 @@ public class BusinessCategory {
     @Column(name = "resource_type", nullable = false, length = 20)
     @Builder.Default
     private ResourceType resourceType = ResourceType.EMPLOYEE;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BusinessCategory other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

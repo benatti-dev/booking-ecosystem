@@ -1,28 +1,35 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { BookingActions } from '../../../store/booking/booking.actions';
 import { selectSlots, selectSlotsLoading, selectSelectedSlot } from '../../../store/booking/booking.selectors';
 
 @Component({
   selector: 'app-slot-picker',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './slot-picker.component.html',
   styleUrl: './slot-picker.component.scss',
+  standalone: false,
 })
-export class SlotPickerComponent implements OnChanges {
+export class SlotPickerComponent implements OnChanges, OnInit, OnDestroy {
   @Input() serviceId!: number;
   @Input() employeeId?: number;
   @Input() resourceId?: number;
   @Output() slotSelected = new EventEmitter<{ date: string; slot: string }>();
 
-  private readonly store = inject(Store);
-
   currentDate = new Date();
-  readonly slots$ = this.store.select(selectSlots);
-  readonly loading$ = this.store.select(selectSlotsLoading);
-  readonly selectedSlot$ = this.store.select(selectSelectedSlot);
+  slots: { availableSlots: string[] } | null = null;
+  loading = false;
+  selectedSlot: string | null = null;
+
+  private sub = new Subscription();
+
+  constructor(private readonly store: Store) {}
+
+  ngOnInit(): void {
+    this.sub.add(this.store.select(selectSlots).subscribe(s => (this.slots = s)));
+    this.sub.add(this.store.select(selectSlotsLoading).subscribe(l => (this.loading = l)));
+    this.sub.add(this.store.select(selectSelectedSlot).subscribe(s => (this.selectedSlot = s)));
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['serviceId'] || changes['employeeId'] || changes['resourceId']) {
@@ -67,5 +74,9 @@ export class SlotPickerComponent implements OnChanges {
 
   private toIsoDate(d: Date): string {
     return d.toISOString().split('T')[0];
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

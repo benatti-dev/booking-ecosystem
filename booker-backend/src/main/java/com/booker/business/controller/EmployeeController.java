@@ -3,11 +3,11 @@ package com.booker.business.controller;
 import com.booker.business.dto.CreateEmployeeRequest;
 import com.booker.business.dto.EmployeeResponse;
 import com.booker.business.service.EmployeeService;
+import com.booker.shared.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,12 +34,11 @@ public class EmployeeController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER','EMPLOYEE','ADMIN')")
     @Operation(summary = "List employees of a business")
-    public Page<EmployeeResponse> list(
+    public PagedResponse<EmployeeResponse> list(
             @PathVariable Long businessId,
             Pageable pageable) {
-        return employeeService.listByBusiness(businessId, pageable);
+        return PagedResponse.of(employeeService.listByBusiness(businessId, pageable));
     }
 
     @GetMapping("/{employeeId}")

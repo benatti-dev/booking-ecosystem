@@ -1,70 +1,113 @@
-<div class="bg-white rounded-2xl shadow-sm p-6">
-  <div class="flex items-center justify-between mb-5">
-    <h2 class="text-lg font-semibold text-gray-800">Bookings</h2>
-    <div class="flex gap-2">
-      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50" (click)="filterStatus = null">
-        All
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex flex-wrap items-center gap-3 mb-5">
+    <h2 class="text-lg font-semibold text-gray-800 mr-auto">Bookings</h2>
+
+    <!-- Date navigation -->
+    <div class="flex items-center gap-1">
+      <button (click)="prevDay()"
+        class="p-2 rounded-lg border hover:bg-gray-50 transition-colors" title="Previous day">
+        ‹
       </button>
-      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-yellow-50"
-              (click)="filterStatus = 'PENDING'">
-        Pending
+      <input type="date" #dateInput [value]="selectedDate" (change)="onDateChange(dateInput.value)"
+        class="text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      <button (click)="nextDay()"
+        class="p-2 rounded-lg border hover:bg-gray-50 transition-colors" title="Next day">
+        ›
       </button>
-      <button class="text-sm px-3 py-1 border rounded-lg hover:bg-green-50"
-              (click)="filterStatus = 'CONFIRMED'">
-        Confirmed
+      <button (click)="today()"
+        class="text-sm px-3 py-1.5 border rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
+        Today
       </button>
     </div>
   </div>
 
-  <div *ngIf="loading$ | async" class="text-center text-gray-400 py-6">Loading...</div>
+  <!-- Filters row -->
+  <div class="flex flex-wrap gap-2 mb-5">
+    <!-- Status filter -->
+    <div class="flex gap-1">
+      <button class="text-sm px-3 py-1 border rounded-lg transition-colors"
+        [class.bg-gray-800]="filterStatus === null" [class.text-white]="filterStatus === null"
+        [class.hover:bg-gray-50]="filterStatus !== null"
+        (click)="filterStatus = null; applyFilters()">All</button>
+      <button class="text-sm px-3 py-1 border rounded-lg transition-colors"
+        [class.bg-yellow-500]="filterStatus === 'PENDING'" [class.text-white]="filterStatus === 'PENDING'"
+        [class.hover:bg-yellow-50]="filterStatus !== 'PENDING'"
+        (click)="filterStatus = 'PENDING'; applyFilters()">Pending</button>
+      <button class="text-sm px-3 py-1 border rounded-lg transition-colors"
+        [class.bg-green-600]="filterStatus === 'CONFIRMED'" [class.text-white]="filterStatus === 'CONFIRMED'"
+        [class.hover:bg-green-50]="filterStatus !== 'CONFIRMED'"
+        (click)="filterStatus = 'CONFIRMED'; applyFilters()">Confirmed</button>
+      <button class="text-sm px-3 py-1 border rounded-lg transition-colors"
+        [class.bg-blue-600]="filterStatus === 'COMPLETED'" [class.text-white]="filterStatus === 'COMPLETED'"
+        [class.hover:bg-blue-50]="filterStatus !== 'COMPLETED'"
+        (click)="filterStatus = 'COMPLETED'; applyFilters()">Completed</button>
+    </div>
 
-  <ng-container *ngIf="!(loading$ | async)">
-    <div *ngFor="let booking of filteredBookings()"
-         class="border border-gray-100 rounded-xl p-4 mb-3 hover:shadow-sm transition-shadow">
-      <div class="flex items-start justify-between">
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="font-medium text-gray-900">{{ booking.clientName }}</span>
-            <span class="text-xs px-2 py-0.5 rounded-full"
-                  [ngClass]="statusClass(booking.status)">
-              {{ statusLabel(booking.status) }}
-            </span>
+    <!-- Employee filter -->
+    @if (employees.length > 0) {
+      <select [(ngModel)]="filterEmployeeId" (ngModelChange)="applyFilters()"
+        class="text-sm border rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        <option [ngValue]="null">All employees</option>
+        @for (emp of employees; track emp.id) {
+          <option [ngValue]="emp.id">{{ emp.displayName }}</option>
+        }
+      </select>
+    }
+  </div>
+
+  <app-alert [message]="error" />
+
+  @if (loading) {
+    <app-loading-spinner />
+  }
+
+  @if (!loading) {
+    @for (booking of filteredBookingsList; track booking.id) {
+      <div class="bg-white border border-gray-100 rounded-xl p-4 mb-3 hover:shadow-sm transition-shadow">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-medium text-gray-900">{{ booking.clientName }}</span>
+              <app-status-badge [status]="booking.status" />
+            </div>
+            <p class="text-sm text-gray-600">{{ booking.serviceName }}</p>
+            <p class="text-sm text-gray-400 mt-1">
+              {{ booking.startTime | date:'EEE d MMM, HH:mm' }}
+              — {{ booking.endTime | date:'HH:mm' }}
+            </p>
+            @if (booking.employeeName) {
+              <p class="text-xs text-gray-400 mt-0.5">👤 {{ booking.employeeName }}</p>
+            }
+            @if (booking.clientNote) {
+              <p class="text-xs text-gray-500 italic mt-1">"{{ booking.clientNote }}"</p>
+            }
           </div>
-          <p class="text-sm text-gray-600">{{ booking.serviceName }}</p>
-          <p class="text-sm text-gray-400 mt-1">
-            {{ booking.startTime | date:'EEE d MMM, HH:mm' }}
-            — {{ booking.endTime | date:'HH:mm' }}
-          </p>
-          <p class="text-xs text-gray-400" *ngIf="booking.employeeName">
-            {{ booking.employeeName }}
-          </p>
-        </div>
-        <div class="flex flex-col gap-2 ml-4">
-          <button
-            *ngIf="booking.status === 'PENDING'"
-            (click)="confirm(booking)"
-            class="text-sm px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700">
-            Confirm
-          </button>
-          <button
-            *ngIf="booking.status === 'CONFIRMED'"
-            (click)="complete(booking)"
-            class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Complete
-          </button>
-          <button
-            *ngIf="booking.status === 'PENDING' || booking.status === 'CONFIRMED'"
-            (click)="cancel(booking)"
-            class="text-sm px-3 py-1 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">
-            Cancel
-          </button>
+          <div class="flex flex-col gap-2 ml-4">
+            @if (booking.status === 'PENDING') {
+              <button (click)="confirm(booking)"
+                class="text-sm px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Confirm
+              </button>
+            }
+            @if (booking.status === 'CONFIRMED') {
+              <button (click)="complete(booking)"
+                class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Complete
+              </button>
+            }
+            @if (booking.status === 'PENDING' || booking.status === 'CONFIRMED') {
+              <button (click)="cancel(booking)"
+                class="text-sm px-3 py-1 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">
+                Cancel
+              </button>
+            }
+          </div>
         </div>
       </div>
-    </div>
-
-    <div *ngIf="filteredBookings().length === 0"
-         class="text-center text-gray-400 py-10">
-      No bookings found
-    </div>
-  </ng-container>
+    }
+    @empty {
+      <app-empty-state icon="📭" title="No bookings for this day" />
+    }
+  }
 </div>

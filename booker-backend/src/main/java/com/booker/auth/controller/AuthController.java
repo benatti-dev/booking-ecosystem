@@ -30,7 +30,7 @@ public class AuthController {
             HttpServletRequest httpReq) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(authService.register(req, httpReq));
+                .body(authService.register(req, resolveClientIp(httpReq)));
     }
 
     @PostMapping("/login")
@@ -39,7 +39,7 @@ public class AuthController {
             @Valid @RequestBody LoginRequest req,
             HttpServletRequest httpReq) {
 
-        return ResponseEntity.ok(authService.login(req, httpReq));
+        return ResponseEntity.ok(authService.login(req, resolveClientIp(httpReq)));
     }
 
     @PostMapping("/refresh")
@@ -58,7 +58,7 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails principal) {
 
         Long userId = principal instanceof com.booker.auth.entity.User u ? u.getId() : null;
-        authService.logout(req.refreshToken(), httpReq, userId);
+        authService.logout(req.refreshToken(), resolveClientIp(httpReq), userId);
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
@@ -68,7 +68,7 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequest req,
             HttpServletRequest httpReq) {
 
-        authService.forgotPassword(req.email(), httpReq);
+        authService.forgotPassword(req.email(), resolveClientIp(httpReq));
         return ResponseEntity.ok(Map.of("message",
                 "If an account with this email exists, a reset link has been sent"));
     }
@@ -79,8 +79,22 @@ public class AuthController {
             @Valid @RequestBody ResetPasswordRequest req,
             HttpServletRequest httpReq) {
 
-        authService.resetPassword(req, httpReq);
+        authService.resetPassword(req, resolveClientIp(httpReq));
         return ResponseEntity.ok(Map.of("message", "Password reset successfully. Please log in."));
+    }
+
+    /**
+     * Extracts the real client IP eagerly in the request thread, before the
+     * servlet container can recycle the request object.  Only trusts the
+     * X-Forwarded-For header when it is present; never exposes the raw header
+     * value without trimming/splitting to mitigate header-injection spoofing.
+     */
+    private static String resolveClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @GetMapping("/me")

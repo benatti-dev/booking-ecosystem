@@ -5,11 +5,11 @@ import com.booker.booking.dto.BookingResponse;
 import com.booker.booking.dto.CancelBookingRequest;
 import com.booker.booking.dto.CreateBookingRequest;
 import com.booker.booking.service.BookingService;
+import com.booker.shared.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,6 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('CLIENT')")
     @Operation(summary = "Create a new booking")
     public BookingResponse create(
             @Valid @RequestBody CreateBookingRequest req,
@@ -46,9 +45,9 @@ public class BookingController {
 
     @GetMapping("/my")
     @Operation(summary = "Get current client's booking history")
-    public Page<BookingResponse> getMyBookings(Authentication auth, Pageable pageable) {
+    public PagedResponse<BookingResponse> getMyBookings(Authentication auth, Pageable pageable) {
         User client = (User) auth.getPrincipal();
-        return bookingService.getMyBookings(client.getId(), pageable);
+        return PagedResponse.of(bookingService.getMyBookings(client.getId(), pageable));
     }
 
     @PatchMapping("/{id}/confirm")
@@ -77,12 +76,12 @@ public class BookingController {
     @GetMapping("/business/{businessId}")
     @PreAuthorize("hasAnyRole('BUSINESS_OWNER','EMPLOYEE','ADMIN')")
     @Operation(summary = "Get bookings for a business (with optional date range)")
-    public Page<BookingResponse> getBusinessBookings(
+    public PagedResponse<BookingResponse> getBusinessBookings(
             @PathVariable Long businessId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             Pageable pageable,
             Authentication auth) {
-        return bookingService.getBusinessBookings(businessId, from, to, pageable);
+        return PagedResponse.of(bookingService.getBusinessBookings(businessId, from, to, pageable));
     }
 }

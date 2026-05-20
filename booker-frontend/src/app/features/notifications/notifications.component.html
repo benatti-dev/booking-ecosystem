@@ -1,0 +1,56 @@
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
+    @if (notifications.length) {
+      <button
+        (click)="markAllRead()"
+        class="text-sm text-blue-600 hover:underline">
+        Mark all as read
+      </button>
+    }
+  </div>
+
+  @if (loading) {
+    <app-loading-spinner />
+  }
+
+  @if (!loading && notifications.length === 0) {
+    <app-empty-state
+      icon="🔔"
+      title="No notifications yet" />
+  }
+
+  @if (!loading) {
+    <div class="space-y-3">
+      @for (n of notifications; track n.id) {
+        <div
+          (click)="markRead(n)"
+          [class.bg-blue-50]="!n.isRead"
+          [class.bg-white]="n.isRead"
+          class="rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow flex gap-3">
+          <span class="text-2xl flex-shrink-0 mt-0.5">{{ typeIcon(n.type) }}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-semibold text-gray-900 text-sm">{{ n.title }}</p>
+              <span class="text-xs text-gray-400 flex-shrink-0">
+                {{ n.createdAt | date:'dd MMM, HH:mm' }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 mt-1">{{ n.body }}</p>
+          </div>
+          @if (!n.isRead) {
+            <div
+            class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0 mt-1.5"></div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    (pageChange)="loadPage($event)" />
+
+  </div>

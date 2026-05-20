@@ -9,18 +9,22 @@
           <span class="text-gray-500">Service</span>
           <span class="font-medium">{{ serviceName }}</span>
         </div>
-        <div class="flex justify-between" *ngIf="employeeName">
-          <span class="text-gray-500">Specialist</span>
-          <span class="font-medium">{{ employeeName }}</span>
-        </div>
+        @if (employeeName) {
+          <div class="flex justify-between">
+            <span class="text-gray-500">Specialist</span>
+            <span class="font-medium">{{ employeeName }}</span>
+          </div>
+        }
         <div class="flex justify-between">
           <span class="text-gray-500">Date &amp; Time</span>
           <span class="font-medium">{{ formatDateTime(date, slot) }}</span>
         </div>
-        <div class="flex justify-between" *ngIf="price">
-          <span class="text-gray-500">Price</span>
-          <span class="font-semibold text-indigo-700">{{ price }}</span>
-        </div>
+        @if (price) {
+          <div class="flex justify-between">
+            <span class="text-gray-500">Price</span>
+            <span class="font-semibold text-indigo-700">{{ price }}</span>
+          </div>
+        }
       </div>
 
       <!-- Client note -->
@@ -37,24 +41,25 @@
       </div>
 
       <!-- Error -->
-      <div *ngIf="error$ | async as error"
-           class="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-        {{ error }}
-      </div>
+      <app-alert [message]="createError" class="mb-4"></app-alert>
 
       <!-- Actions -->
       <div class="flex gap-3">
         <button
           routerLink="/home"
-          class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+          class="btn btn-secondary flex-1 py-3">
           Cancel
         </button>
         <button
-          class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
-          [disabled]="creating$ | async"
+          class="btn-primary flex-1 py-3 font-semibold"
+          [disabled]="creating"
           (click)="confirm()">
-          <span *ngIf="!(creating$ | async)">Confirm Booking</span>
-          <span *ngIf="creating$ | async">Booking...</span>
+          @if (!creating) {
+            <span>Confirm Booking</span>
+          }
+          @if (creating) {
+            <span>Booking...</span>
+          }
         </button>
       </div>
     </div>

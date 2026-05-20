@@ -1,8 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { take } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { BusinessActions } from '../../../store/business/business.actions';
 import {
   selectMyBusinesses, selectAllBusinesses, selectActiveTab,
@@ -13,23 +11,33 @@ import { BusinessResponse } from '../../../core/business/business.service';
 
 @Component({
   selector: 'app-my-businesses',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './my-businesses.component.html'
+  templateUrl: './my-businesses.component.html',
+  standalone: false,
 })
-export class MyBusinessesComponent implements OnInit {
-  private readonly store = inject(Store);
+export class MyBusinessesComponent implements OnInit, OnDestroy {
+  isAdmin = false;
+  myList: BusinessResponse[] = [];
+  allList: BusinessResponse[] = [];
+  activeTab: 'my' | 'all' = 'my';
+  loadingMy = false;
+  loadingAll = false;
+  errorMy: string | null = null;
+  errorAll: string | null = null;
 
-  readonly isAdmin$    = this.store.select(selectIsAdmin);
-  readonly myList$     = this.store.select(selectMyBusinesses);
-  readonly allList$    = this.store.select(selectAllBusinesses);
-  readonly activeTab$  = this.store.select(selectActiveTab);
-  readonly loadingMy$  = this.store.select(selectLoadingMy);
-  readonly loadingAll$ = this.store.select(selectLoadingAll);
-  readonly errorMy$    = this.store.select(selectErrorMy);
-  readonly errorAll$   = this.store.select(selectErrorAll);
+  private sub = new Subscription();
+
+  constructor(private readonly store: Store) {}
 
   ngOnInit(): void {
+    this.sub.add(this.store.select(selectIsAdmin).subscribe(v => (this.isAdmin = v)));
+    this.sub.add(this.store.select(selectMyBusinesses).subscribe(v => (this.myList = v ?? [])));
+    this.sub.add(this.store.select(selectAllBusinesses).subscribe(v => (this.allList = v ?? [])));
+    this.sub.add(this.store.select(selectActiveTab).subscribe(v => (this.activeTab = v)));
+    this.sub.add(this.store.select(selectLoadingMy).subscribe(v => (this.loadingMy = v)));
+    this.sub.add(this.store.select(selectLoadingAll).subscribe(v => (this.loadingAll = v)));
+    this.sub.add(this.store.select(selectErrorMy).subscribe(v => (this.errorMy = v)));
+    this.sub.add(this.store.select(selectErrorAll).subscribe(v => (this.errorAll = v)));
+
     this.store.select(selectIsAdmin).pipe(take(1)).subscribe(isAdmin => {
       if (isAdmin) {
         this.store.dispatch(BusinessActions.switchTab({ tab: 'all' }));
@@ -49,16 +57,8 @@ export class MyBusinessesComponent implements OnInit {
     }
   }
 
-  statusClass(status: string): string {
-    return ({
-      ACTIVE:    'bg-green-100 text-green-700',
-      PENDING:   'bg-yellow-100 text-yellow-700',
-      SUSPENDED: 'bg-orange-100 text-orange-700',
-      REJECTED:  'bg-red-100 text-red-700',
-    })[status] ?? 'bg-gray-100 text-gray-700';
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
-
-  trackById(_: number, b: BusinessResponse): number { return b.id; }
 }
-
 

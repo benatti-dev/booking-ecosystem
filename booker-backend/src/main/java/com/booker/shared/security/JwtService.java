@@ -52,6 +52,10 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Object extractClaim(String token, String claimName) {
+        return parseAllClaims(token).get(claimName);
+    }
+
     public long getExpirationMs() {
         return expirationMs;
     }

@@ -15,4 +15,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findByBusinessIdAndIsActiveTrue(Long businessId);
 
     Optional<Employee> findByIdAndBusinessId(Long id, Long businessId);
+
+    /** Used to verify that an EMPLOYEE-role user belongs to a specific business. */
+    boolean existsByUserIdAndBusinessId(Long userId, Long businessId);
 }

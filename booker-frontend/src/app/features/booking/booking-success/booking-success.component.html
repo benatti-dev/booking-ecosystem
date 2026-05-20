@@ -13,7 +13,7 @@
         Your appointment is pending confirmation from the business.
       </p>
 
-      <ng-container *ngIf="booking">
+      @if (booking) {
         <div class="bg-gray-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
           <div class="flex justify-between">
             <span class="text-gray-500">Booking #</span>
@@ -25,26 +25,28 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500">Date &amp; Time</span>
-            <span class="font-medium">{{ formatDateTime(booking.startTime) }}</span>
+            <span class="font-medium">{{ booking.startTime | dateTime }}</span>
           </div>
-          <div class="flex justify-between" *ngIf="booking.employeeName">
-            <span class="text-gray-500">Specialist</span>
-            <span class="font-medium">{{ booking.employeeName }}</span>
-          </div>
+          @if (booking.employeeName) {
+            <div class="flex justify-between">
+              <span class="text-gray-500">Specialist</span>
+              <span class="font-medium">{{ booking.employeeName }}</span>
+            </div>
+          }
           <div class="flex justify-between">
             <span class="text-gray-500">Status</span>
             <span class="font-semibold text-orange-600">Pending confirmation</span>
           </div>
         </div>
-      </ng-container>
+      }
 
       <div class="flex flex-col gap-3">
         <a routerLink="/dashboard"
-           class="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+          class="btn-primary btn-block py-3 font-semibold">
           My Bookings
         </a>
         <a routerLink="/home"
-           class="w-full py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+          class="btn btn-secondary btn-block py-3">
           Back to Home
         </a>
       </div>

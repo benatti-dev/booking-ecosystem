@@ -1,42 +1,138 @@
-<nav class="bg-white shadow-sm border-b border-gray-200">
+<nav class="bg-white shadow-sm border-b border-gray-200 relative z-30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between h-16 items-center">
 
+      <!-- Logo -->
       <a routerLink="/home" class="flex items-center gap-2 text-xl font-bold text-blue-600">
         Booker
       </a>
 
-      <div class="hidden md:flex items-center gap-6 text-sm text-gray-600">
-        <a routerLink="/home" class="hover:text-blue-600 transition-colors">Browse</a>
+      <!-- Desktop nav links -->
+      <div class="hidden md:flex items-center gap-1 text-sm text-gray-600">
+        @for (item of navItems; track item.path) {
+          <a [routerLink]="item.path"
+             routerLinkActive="text-blue-600 bg-blue-50"
+             class="px-3 py-1.5 rounded-lg hover:text-blue-600 hover:bg-gray-50 transition-colors font-medium">
+            {{ item.label }}
+          </a>
+        }
       </div>
 
-      <div class="flex items-center gap-3">
-        <ng-container *ngIf="isAuthenticated$ | async; else guestLinks">
-          <span class="text-sm text-gray-700">
-            {{ userEmail$ | async }}
+      <!-- Desktop right side -->
+      <div class="hidden md:flex items-center gap-3">
+        @if (isAuthenticated) {
+          <!-- User email badge -->
+          <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full max-w-[160px] truncate">
+            {{ user?.email }}
           </span>
-          <a routerLink="/dashboard"
-             class="text-sm text-gray-600 hover:text-blue-600 transition-colors">
-            My Bookings
+
+          <!-- Notification bell -->
+          <a routerLink="/notifications" class="relative p-2 text-gray-500 hover:text-blue-600 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            @if (unreadCount > 0) {
+              <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1
+                           bg-red-500 text-white text-[10px] font-bold rounded-full
+                           flex items-center justify-center leading-none">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
+            }
           </a>
+
           <button (click)="logout()"
-                  class="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
+            class="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
             Logout
           </button>
-        </ng-container>
-
-        <ng-template #guestLinks>
+        } @else {
           <a routerLink="/login"
-             class="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+            class="text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium">
             Login
           </a>
           <a routerLink="/register"
-             class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+            class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
             Sign up
           </a>
-        </ng-template>
+        }
+      </div>
+
+      <!-- Mobile right: bell + burger -->
+      <div class="flex md:hidden items-center gap-2">
+        @if (isAuthenticated) {
+          <a routerLink="/notifications" class="relative p-2 text-gray-500 hover:text-blue-600 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            @if (unreadCount > 0) {
+              <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1
+                           bg-red-500 text-white text-[10px] font-bold rounded-full
+                           flex items-center justify-center leading-none">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
+            }
+          </a>
+        }
+
+        <!-- Burger button -->
+        <button (click)="toggleMobileMenu()"
+          class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+          [attr.aria-expanded]="mobileMenuOpen"
+          aria-label="Toggle navigation menu">
+          @if (mobileMenuOpen) {
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          } @else {
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          }
+        </button>
       </div>
 
     </div>
   </div>
+
+  <!-- Mobile menu dropdown -->
+  @if (mobileMenuOpen) {
+    <div class="md:hidden border-t border-gray-200 bg-white shadow-lg">
+      <div class="px-4 py-3 space-y-1">
+
+        @for (item of navItems; track item.path) {
+          <a [routerLink]="item.path"
+             routerLinkActive="text-blue-600 bg-blue-50"
+             (click)="closeMobileMenu()"
+             class="block px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700
+                    hover:text-blue-600 hover:bg-gray-50 transition-colors">
+            {{ item.label }}
+          </a>
+        }
+
+        <hr class="border-gray-200 my-2">
+
+        @if (isAuthenticated) {
+          <div class="px-3 py-1 text-xs text-gray-400 truncate">{{ user?.email }}</div>
+          <button (click)="logout()"
+            class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium
+                   text-red-600 hover:bg-red-50 transition-colors">
+            Logout
+          </button>
+        } @else {
+          <a routerLink="/login" (click)="closeMobileMenu()"
+            class="block px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700
+                   hover:text-blue-600 hover:bg-gray-50 transition-colors">
+            Login
+          </a>
+          <a routerLink="/register" (click)="closeMobileMenu()"
+            class="block px-3 py-2.5 rounded-lg text-sm font-medium text-white
+                   bg-blue-600 hover:bg-blue-700 transition-colors text-center">
+            Sign up
+          </a>
+        }
+
+      </div>
+    </div>
+  }
 </nav>

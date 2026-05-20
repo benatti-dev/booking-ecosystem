@@ -1,33 +1,26 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { BookingActions } from '../../../store/booking/booking.actions';
 import {
-  selectPendingBooking, selectCreating, selectCreateError
+  selectPendingBooking, selectCreating, selectCreateError,
 } from '../../../store/booking/booking.selectors';
 import { BusinessService } from '../../../core/business/business.service';
 import { BookingService } from '../../../core/booking/booking.service';
 
 @Component({
   selector: 'app-booking-confirm',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './booking-confirm.component.html',
   styleUrl: './booking-confirm.component.scss',
+  standalone: false,
 })
-export class BookingConfirmComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly store = inject(Store);
-  private readonly businessService = inject(BusinessService);
-  private readonly bookingService = inject(BookingService);
-
+export class BookingConfirmComponent implements OnInit, OnDestroy {
   clientNoteCtrl = new FormControl('');
 
-  readonly creating$ = this.store.select(selectCreating);
-  readonly error$ = this.store.select(selectCreateError);
+  creating = false;
+  createError: string | null = null;
 
   serviceId!: number;
   employeeId?: number;
@@ -39,6 +32,16 @@ export class BookingConfirmComponent implements OnInit {
   employeeName = '';
   price = '';
 
+  private sub = new Subscription();
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly store: Store,
+    private readonly businessService: BusinessService,
+    private readonly bookingService: BookingService,
+  ) {}
+
   ngOnInit(): void {
     const p = this.route.snapshot.queryParams;
     this.serviceId = Number(p['serviceId']);
@@ -47,12 +50,17 @@ export class BookingConfirmComponent implements OnInit {
     this.date = p['date'];
     this.slot = p['slot'];
 
-    // Listen for successful booking creation
-    this.store.select(selectPendingBooking).subscribe(booking => {
-      if (booking) {
-        this.router.navigate(['/booking/success'], { queryParams: { bookingId: booking.id } });
-      }
-    });
+    this.sub.add(this.store.select(selectCreating).subscribe(v => (this.creating = v)));
+    this.sub.add(this.store.select(selectCreateError).subscribe(v => (this.createError = v)));
+
+    // Navigate to success once booking is created
+    this.sub.add(
+      this.store.select(selectPendingBooking).subscribe(booking => {
+        if (booking) {
+          this.router.navigate(['/booking/success'], { queryParams: { bookingId: booking.id } });
+        }
+      }),
+    );
   }
 
   confirm(): void {
@@ -76,7 +84,11 @@ export class BookingConfirmComponent implements OnInit {
     const d = new Date(`${date}T${slot}`);
     return d.toLocaleString('en-US', {
       weekday: 'long', day: 'numeric', month: 'long',
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit',
     });
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

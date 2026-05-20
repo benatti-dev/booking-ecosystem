@@ -6,12 +6,12 @@ import com.booker.business.service.BusinessService;
 import com.booker.catalog.dto.CreateServiceRequest;
 import com.booker.catalog.dto.ServiceResponse;
 import com.booker.catalog.service.ServiceService;
+import com.booker.shared.dto.PagedResponse;
 import com.booker.shared.exception.BookerException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,12 +31,12 @@ public class ServiceController {
 
     @GetMapping
     @Operation(summary = "List services for a business (public)")
-    public ResponseEntity<Page<ServiceResponse>> list(
+    public ResponseEntity<PagedResponse<ServiceResponse>> list(
             @PathVariable Long businessId,
             @RequestParam(defaultValue = "true") Boolean activeOnly,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        return ResponseEntity.ok(serviceService.listByBusiness(businessId, activeOnly, pageable));
+        return ResponseEntity.ok(PagedResponse.of(serviceService.listByBusiness(businessId, activeOnly, pageable)));
     }
 
     @PostMapping

@@ -15,6 +15,7 @@ Each file covers one domain or development phase.
 | [booking-engine-deep-dive.md](booking-engine-deep-dive.md) | Deep dive into booking algorithm and race-condition prevention |
 | [dynamic-attributes.md](dynamic-attributes.md) | Dynamic service attribute system |
 | [multi-tenancy.md](multi-tenancy.md) | Multi-tenancy and data isolation |
+| [email-notifications.md](email-notifications.md) | Mock email service and SMTP migration guide |
 
 ## Implementation Status
 
@@ -23,6 +24,6 @@ Each file covers one domain or development phase.
 | Phase 1 — Auth | ✅ Complete |
 | Phase 2 — Business & Catalog | ✅ Complete |
 | Phase 3 — Scheduling & Booking | ✅ Complete |
-| Phase 4 — Search & Notifications | ⏳ Planned |
+| Phase 4 — Search & Notifications | ✅ Complete |
 | Phase 5 — Analytics & Admin | ⏳ Planned |
 | Phase 6 — Hardening & Testing | ⏳ Planned |

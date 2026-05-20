@@ -1,0 +1,19 @@
+@if (totalPages > 1) {
+  <div class="flex justify-center items-center gap-3 mt-6">
+    <button
+      (click)="pageChange.emit(page - 1)"
+      [disabled]="page === 0"
+    class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50
+           disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+      Previous
+    </button>
+    <span class="text-sm text-gray-500">{{ page + 1 }} / {{ totalPages }}</span>
+    <button
+      (click)="pageChange.emit(page + 1)"
+      [disabled]="page >= totalPages - 1"
+    class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50
+           disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+      Next
+    </button>
+  </div>
+}

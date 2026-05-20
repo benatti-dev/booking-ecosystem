@@ -1,24 +1,18 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { switchMap } from 'rxjs';
 import {
   BusinessService,
-  AttributeDefinition
+  AttributeDefinition,
 } from '../../../core/business/business.service';
 
 @Component({
   selector: 'app-service-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './service-form.component.html'
+  templateUrl: './service-form.component.html',
+  standalone: false,
 })
 export class ServiceFormComponent implements OnInit {
-  private readonly fb          = inject(FormBuilder);
-  private readonly businessSvc = inject(BusinessService);
-  private readonly route       = inject(ActivatedRoute);
-  private readonly router      = inject(Router);
-
   businessId   = signal(0);
   categoryId   = signal(0);
   definitions  = signal<AttributeDefinition[]>([]);
@@ -31,26 +25,32 @@ export class ServiceFormComponent implements OnInit {
     description: [''],
     durationMin: [null as number | null, [Validators.required, Validators.min(1)]],
     price:       [null as number | null],
-    currency:    ['UAH']
+    currency:    ['UAH'],
   });
 
   // Dynamic attributes FormGroup (built after definitions load)
   attrsForm: FormGroup = this.fb.group({});
 
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly businessSvc: BusinessService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+  ) {}
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('businessId'));
     this.businessId.set(id);
 
-    // Load business to get categoryId, then load definitions
-    this.businessSvc.getBusiness(id).subscribe({
-      next: business => {
+    this.businessSvc.getBusiness(id).pipe(
+      switchMap(business => {
         this.categoryId.set(business.category.id);
-        this.businessSvc.getAttributeDefinitions(business.category.id).subscribe({
-          next: defs => {
-            this.definitions.set(defs);
-            this.buildAttrsForm(defs);
-          }
-        });
+        return this.businessSvc.getAttributeDefinitions(business.category.id);
+      })
+    ).subscribe({
+      next: defs => {
+        this.definitions.set(defs);
+        this.buildAttrsForm(defs);
       },
       error: () => this.error.set('Failed to load business details.')
     });
@@ -106,18 +106,5 @@ export class ServiceFormComponent implements OnInit {
         this.loading.set(false);
       }
     });
-  }
-
-  toggleMultiSelect(fieldKey: string, option: string): void {
-    const current: string[] = this.attrsForm.get(fieldKey)?.value ?? [];
-    const updated = current.includes(option)
-      ? current.filter(v => v !== option)
-      : [...current, option];
-    this.attrsForm.patchValue({ [fieldKey]: updated });
-  }
-
-  isSelected(fieldKey: string, option: string): boolean {
-    const val: string[] = this.attrsForm.get(fieldKey)?.value ?? [];
-    return val.includes(option);
   }
 }

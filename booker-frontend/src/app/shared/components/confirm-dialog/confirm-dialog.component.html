@@ -1,0 +1,15 @@
+@if (open) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/40" (click)="cancel()"></div>
+    <!-- Dialog -->
+    <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ title }}</h3>
+      <p class="text-sm text-gray-600 mb-6">{{ message }}</p>
+      <div class="flex justify-end gap-3">
+        <button (click)="cancel()" class="btn btn-secondary btn-sm">{{ cancelLabel }}</button>
+        <button (click)="confirm()" class="btn btn-sm" [ngClass]="confirmClass">{{ confirmLabel }}</button>
+      </div>
+    </div>
+  </div>
+}

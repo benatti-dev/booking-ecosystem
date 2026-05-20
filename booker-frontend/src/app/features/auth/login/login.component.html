@@ -11,41 +11,39 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input formControlName="email" type="email" autocomplete="email"
-               placeholder="you@example.com"
+          placeholder="you@example.com"
                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-               [class.border-red-500]="isInvalid('email')" />
-        <p *ngIf="isInvalid('email')" class="text-xs text-red-500 mt-1">
-          Enter a valid email address
+          [class.border-red-500]="isInvalid('email')" />
+          @if (isInvalid('email')) {
+            <p class="text-xs text-red-500 mt-1">
+              Enter a valid email address
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input formControlName="password" type="password" autocomplete="current-password"
+            placeholder="••••••••"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            [class.border-red-500]="isInvalid('password')" />
+          </div>
+
+          <app-alert [message]="error"></app-alert>
+
+          <button type="submit" [disabled]="loading"
+            class="btn-primary btn-block py-2.5 text-sm">
+            {{ loading ? 'Signing in...' : 'Sign in' }}
+          </button>
+
+        </form>
+
+        <p class="text-center text-sm text-gray-500 mt-6">
+          Don't have an account?
+          <a routerLink="/register" class="text-blue-600 hover:underline font-medium">Sign up</a>
         </p>
+
       </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-        <input formControlName="password" type="password" autocomplete="current-password"
-               placeholder="••••••••"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-               [class.border-red-500]="isInvalid('password')" />
-      </div>
-
-      <p *ngIf="error$ | async as err"
-         class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-        {{ err }}
-      </p>
-
-      <button type="submit" [disabled]="loading$ | async"
-              class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60
-                     text-white font-medium py-2.5 rounded-lg transition-colors text-sm">
-        {{ (loading$ | async) ? 'Signing in...' : 'Sign in' }}
-      </button>
-
-    </form>
-
-    <p class="text-center text-sm text-gray-500 mt-6">
-      Don't have an account?
-      <a routerLink="/register" class="text-blue-600 hover:underline font-medium">Sign up</a>
-    </p>
-
-  </div>
-</div>
+    </div>

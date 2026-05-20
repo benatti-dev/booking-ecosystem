@@ -44,4 +44,16 @@ public class PasswordResetToken {
     public boolean isValid() {
         return !used && !isExpired();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PasswordResetToken other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -27,4 +27,16 @@ public class ScheduleBreak {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ScheduleBreak other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

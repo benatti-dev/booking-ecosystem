@@ -4,11 +4,11 @@ import com.booker.auth.entity.User;
 import com.booker.business.dto.*;
 import com.booker.business.entity.BusinessStatus;
 import com.booker.business.service.BusinessService;
+import com.booker.shared.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -46,12 +46,12 @@ public class BusinessController {
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'ADMIN')")
     @Operation(summary = "List my businesses")
-    public ResponseEntity<Page<BusinessResponse>> myBusinesses(
+    public ResponseEntity<PagedResponse<BusinessResponse>> myBusinesses(
             Authentication auth,
             @PageableDefault(size = 20) Pageable pageable) {
 
         User owner = (User) auth.getPrincipal();
-        return ResponseEntity.ok(businessService.getMyBusinesses(owner.getId(), pageable));
+        return ResponseEntity.ok(PagedResponse.of(businessService.getMyBusinesses(owner.getId(), pageable)));
     }
 
     @PutMapping("/{id}")
@@ -79,10 +79,10 @@ public class BusinessController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List businesses by status (ADMIN)")
-    public ResponseEntity<Page<BusinessResponse>> listByStatus(
+    public ResponseEntity<PagedResponse<BusinessResponse>> listByStatus(
             @RequestParam(defaultValue = "PENDING") BusinessStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        return ResponseEntity.ok(businessService.getByStatus(status, pageable));
+        return ResponseEntity.ok(PagedResponse.of(businessService.getByStatus(status, pageable)));
     }
 }

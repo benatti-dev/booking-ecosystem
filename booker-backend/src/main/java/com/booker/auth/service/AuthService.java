@@ -6,7 +6,6 @@ import com.booker.auth.entity.UserRole;
 import com.booker.auth.repository.UserRepository;
 import com.booker.shared.exception.BookerException;
 import com.booker.shared.security.JwtService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +49,7 @@ public class AuthService {
     // ── Register ──────────────────────────────────────────────────
 
     @Transactional
-    public AuthResponse register(RegisterRequest req, HttpServletRequest httpReq) {
+    public AuthResponse register(RegisterRequest req, String clientIp) {
         if (userRepository.existsByEmail(req.email())) {
             throw BookerException.conflict("An account with this email already exists");
         }
@@ -65,7 +64,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        auditLogService.log(AuditLogService.ACTION_REGISTER, user.getId(), httpReq,
+        auditLogService.log(AuditLogService.ACTION_REGISTER, user.getId(), clientIp,
                 "{\"email\":\"" + user.getEmail() + "\"}");
 
         return issueTokenPair(user);
@@ -74,7 +73,7 @@ public class AuthService {
     // ── Login ─────────────────────────────────────────────────────
 
     @Transactional
-    public AuthResponse login(LoginRequest req, HttpServletRequest httpReq) {
+    public AuthResponse login(LoginRequest req, String clientIp) {
         // username field holds the email — aligns with @benatti/ng-auth-lib contract
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.username(), req.password())
@@ -83,7 +82,7 @@ public class AuthService {
         User user = userRepository.findByEmail(req.username())
                 .orElseThrow(() -> BookerException.unauthorized("User not found"));
 
-        auditLogService.log(AuditLogService.ACTION_LOGIN, user.getId(), httpReq);
+        auditLogService.log(AuditLogService.ACTION_LOGIN, user.getId(), clientIp);
 
         return issueTokenPair(user);
     }
@@ -92,26 +91,24 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(String rawRefreshToken) {
-        User user = refreshTokenService.validateRefreshToken(rawRefreshToken);
-
-        // Token rotation: revoke old refresh token, issue a new pair
-        refreshTokenService.revokeRefreshToken(rawRefreshToken);
-
+        // Atomically validate + revoke within a single pessimistic-write-locked
+        // transaction to prevent replay attacks from concurrent refresh requests.
+        User user = refreshTokenService.validateAndRevokeRefreshToken(rawRefreshToken);
         return issueTokenPair(user);
     }
 
     // ── Logout ────────────────────────────────────────────────────
 
     @Transactional
-    public void logout(String rawRefreshToken, HttpServletRequest httpReq, Long userId) {
+    public void logout(String rawRefreshToken, String clientIp, Long userId) {
         refreshTokenService.revokeRefreshToken(rawRefreshToken);
-        auditLogService.log(AuditLogService.ACTION_LOGOUT, userId, httpReq);
+        auditLogService.log(AuditLogService.ACTION_LOGOUT, userId, clientIp);
     }
 
     // ── Forgot Password ───────────────────────────────────────────
 
     @Transactional
-    public void forgotPassword(String email, HttpServletRequest httpReq) {
+    public void forgotPassword(String email, String clientIp) {
         userRepository.findByEmail(email).ifPresent(user -> {
             String rawToken = refreshTokenService.createPasswordResetToken(user);
 
@@ -120,7 +117,7 @@ public class AuthService {
             log.info("[DEV STUB] Password reset link for {}: /reset-password?token={}",
                     user.getEmail(), rawToken);
 
-            auditLogService.log(AuditLogService.ACTION_PASSWORD_RESET_REQUEST, user.getId(), httpReq);
+            auditLogService.log(AuditLogService.ACTION_PASSWORD_RESET_REQUEST, user.getId(), clientIp);
         });
         // Always succeed to prevent email enumeration
     }
@@ -128,7 +125,7 @@ public class AuthService {
     // ── Reset Password ────────────────────────────────────────────
 
     @Transactional
-    public void resetPassword(ResetPasswordRequest req, HttpServletRequest httpReq) {
+    public void resetPassword(ResetPasswordRequest req, String clientIp) {
         User user = refreshTokenService.validatePasswordResetToken(req.token());
 
         user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
@@ -138,7 +135,7 @@ public class AuthService {
         refreshTokenService.revokeAllUserTokens(user.getId());
         refreshTokenService.consumePasswordResetToken(req.token());
 
-        auditLogService.log(AuditLogService.ACTION_PASSWORD_RESET, user.getId(), httpReq);
+        auditLogService.log(AuditLogService.ACTION_PASSWORD_RESET, user.getId(), clientIp);
     }
 
     // ── Current User ─────────────────────────────────────────────

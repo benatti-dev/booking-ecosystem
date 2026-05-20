@@ -242,7 +242,10 @@ public class DefaultSeedDataInitializer implements ApplicationRunner {
         }
 
         BusinessCategory category = categoryRepository.findByName("beauty_salon").orElse(null);
-        if (category == null) return;
+        if (category == null) {
+            log.warn("Cannot seed demo business: category 'beauty_salon' not found. Ensure categories are seeded first.");
+            return;
+        }
 
         // Business
         Business business = businessRepository.save(Business.builder()

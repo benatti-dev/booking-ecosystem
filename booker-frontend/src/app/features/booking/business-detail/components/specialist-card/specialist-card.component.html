@@ -1,0 +1,48 @@
+<button
+  type="button"
+  class="specialist-card"
+  [class.is-selected]="isSelected"
+  (click)="onSelect()"
+  [attr.aria-pressed]="isSelected"
+  [attr.aria-label]="specialist.displayName + (specialist.position ? ', ' + specialist.position : '')"
+>
+  <!-- Selected checkmark -->
+  @if (isSelected) {
+    <span class="checkmark" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  }
+
+  <div class="flex items-center gap-3">
+    <!-- Avatar -->
+    <div class="avatar" aria-hidden="true">
+      @if (specialist.avatarUrl) {
+        <img [src]="specialist.avatarUrl" [alt]="specialist.displayName"
+          class="w-full h-full object-cover rounded-full" loading="lazy" />
+      } @else {
+        <span class="text-sm font-semibold text-indigo-600">{{ initials }}</span>
+      }
+    </div>
+
+    <!-- Name + role + rating -->
+    <div class="flex-1 min-w-0 text-left">
+      <p class="font-semibold text-gray-900 text-sm truncate">{{ specialist.displayName }}</p>
+      @if (specialist.position) {
+        <p class="text-gray-500 text-xs mt-0.5 truncate">{{ specialist.position }}</p>
+      }
+    </div>
+
+    <!-- Rating (right side) -->
+    @if (ratingText) {
+      <div class="flex items-center gap-1 text-amber-400 flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+        <span class="text-xs font-semibold text-gray-700">{{ ratingText }}</span>
+      </div>
+    }
+  </div>
+</button>

@@ -1,27 +1,32 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { AsyncPipe, NgIf, NgFor, NgClass, DatePipe, CurrencyPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { selectUser } from '../../store/auth/auth.selectors';
 import { BookingActions } from '../../store/booking/booking.actions';
 import { selectMyBookings, selectMyBookingsLoading } from '../../store/booking/booking.selectors';
-import { BookingResponse, BookingStatus } from '../../core/booking/booking.service';
+import { BookingResponse } from '../../core/booking/booking.service';
+import { AuthUser } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
-  imports: [AsyncPipe, NgIf, NgFor, NgClass, DatePipe, CurrencyPipe, RouterLink],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
+  standalone: false,
 })
-export class DashboardComponent implements OnInit {
-  private readonly store = inject(Store);
-  readonly user$ = this.store.select(selectUser);
-  readonly bookings$ = this.store.select(selectMyBookings);
-  readonly loading$ = this.store.select(selectMyBookingsLoading);
+export class DashboardComponent implements OnInit, OnDestroy {
+  user: AuthUser | null = null;
+  bookings: BookingResponse[] = [];
+  loading = false;
+
+  private sub = new Subscription();
+
+  constructor(private readonly store: Store) {}
 
   ngOnInit(): void {
     this.store.dispatch(BookingActions.loadMyBookings());
+    this.sub.add(this.store.select(selectUser).subscribe(u => (this.user = u)));
+    this.sub.add(this.store.select(selectMyBookings).subscribe(b => (this.bookings = b ?? [])));
+    this.sub.add(this.store.select(selectMyBookingsLoading).subscribe(l => (this.loading = l)));
   }
 
   cancelBooking(booking: BookingResponse): void {
@@ -30,29 +35,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  statusLabel(status: BookingStatus): string {
-    const map: Record<BookingStatus, string> = {
-      PENDING: 'Pending',
-      CONFIRMED: 'Confirmed',
-      COMPLETED: 'Completed',
-      CANCELLED: 'Cancelled',
-      NO_SHOW: 'No-show',
-    };
-    return map[status] ?? status;
-  }
-
-  statusClass(status: BookingStatus): string {
-    const map: Record<BookingStatus, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-700',
-      CONFIRMED: 'bg-green-100 text-green-700',
-      COMPLETED: 'bg-blue-100 text-blue-700',
-      CANCELLED: 'bg-red-100 text-red-600',
-      NO_SHOW: 'bg-gray-100 text-gray-600',
-    };
-    return map[status] ?? '';
-  }
-
   canCancel(booking: BookingResponse): boolean {
     return booking.status === 'PENDING' || booking.status === 'CONFIRMED';
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

@@ -3,11 +3,11 @@ package com.booker.business.controller;
 import com.booker.business.dto.CreateResourceRequest;
 import com.booker.business.dto.ResourceResponse;
 import com.booker.business.service.ResourceService;
+import com.booker.shared.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,10 +36,10 @@ public class ResourceController {
     @GetMapping
     @PreAuthorize("hasAnyRole('BUSINESS_OWNER','ADMIN')")
     @Operation(summary = "List resources of a business")
-    public Page<ResourceResponse> list(
+    public PagedResponse<ResourceResponse> list(
             @PathVariable Long businessId,
             Pageable pageable) {
-        return resourceService.listByBusiness(businessId, pageable);
+        return PagedResponse.of(resourceService.listByBusiness(businessId, pageable));
     }
 
     @GetMapping("/{resourceId}")

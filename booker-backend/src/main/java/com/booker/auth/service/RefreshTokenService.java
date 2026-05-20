@@ -7,6 +7,7 @@ import com.booker.auth.repository.PasswordResetTokenRepository;
 import com.booker.auth.repository.RefreshTokenRepository;
 import com.booker.shared.exception.BookerException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
@@ -33,7 +35,7 @@ public class RefreshTokenService {
     @Value("${app.password-reset.expiry-hours:1}")
     private int resetExpiryHours;
 
-    // ── Refresh Token ─────────────────────────────────────────────
+    // ── Refresh Token ──────────────────────────────────────────────────────
 
     /**
      * Creates a new refresh token for the given user.
@@ -55,7 +57,31 @@ public class RefreshTokenService {
     }
 
     /**
+     * Atomically validates and revokes the refresh token within a single
+     * pessimistic-write-locked transaction.  This prevents two concurrent
+     * requests from replaying the same token and both receiving a new
+     * access token (token-replay attack).
+     *
+     * @return the {@link User} that owned the token
+     */
+    @Transactional
+    public User validateAndRevokeRefreshToken(String rawToken) {
+        String tokenHash = sha256Hex(rawToken);
+        RefreshToken token = refreshTokenRepository.findByTokenHashForUpdate(tokenHash)
+                .orElseThrow(() -> BookerException.unauthorized("Invalid refresh token"));
+
+        if (!token.isValid()) {
+            throw BookerException.unauthorized("Refresh token is expired or revoked");
+        }
+        token.setRevoked(true);
+        refreshTokenRepository.save(token);
+        return token.getUser();
+    }
+
+    /**
      * Validates the raw refresh token and returns the associated user.
+     * For read-only contexts only (e.g., token introspection).
+     * For the actual token-rotation flow use {@link #validateAndRevokeRefreshToken}.
      */
     @Transactional(readOnly = true)
     public User validateRefreshToken(String rawToken) {
@@ -90,7 +116,7 @@ public class RefreshTokenService {
         refreshTokenRepository.revokeAllByUserId(userId);
     }
 
-    // ── Password Reset Token ──────────────────────────────────────
+    // ── Password Reset Token ──────────────────────────────────────────────
 
     /**
      * Creates a password reset token.
@@ -142,22 +168,21 @@ public class RefreshTokenService {
                 });
     }
 
-    // ── Cleanup Scheduler ─────────────────────────────────────────
+    // ── Cleanup Scheduler ─────────────────────────────────────────────────
 
     /** Runs daily at 3:00 AM to delete stale tokens. */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void purgeExpiredTokens() {
         Instant now = Instant.now();
-        int rt = refreshTokenRepository.deleteExpiredAndRevoked(now);
+        int rt  = refreshTokenRepository.deleteExpiredAndRevoked(now);
         int prt = passwordResetTokenRepository.deleteExpiredAndUsed(now);
         if (rt > 0 || prt > 0) {
-            // Log via standard logger — avoid autowiring slf4j in non-@Slf4j class
-            System.out.printf("[TokenCleanup] Deleted %d refresh tokens, %d reset tokens%n", rt, prt);
+            log.info("[TokenCleanup] Deleted {} refresh tokens, {} reset tokens", rt, prt);
         }
     }
 
-    // ── Utility ───────────────────────────────────────────────────
+    // ── Utility ─────────────────────────────────────────────────────────────
 
     private static String sha256Hex(String input) {
         try {

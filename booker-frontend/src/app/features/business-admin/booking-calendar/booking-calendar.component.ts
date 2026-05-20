@@ -1,37 +1,118 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { BookingActions } from '../../../store/booking/booking.actions';
-import { selectBusinessBookings, selectBusinessBookingsLoading } from '../../../store/booking/booking.selectors';
-import { BookingResponse, BookingStatus } from '../../../core/booking/booking.service';
+import { BookingService, BookingResponse, BookingStatus, EmployeeResponse } from '../../../core/booking/booking.service';
 
 @Component({
   selector: 'app-booking-calendar',
-  standalone: true,
-  imports: [CommonModule, DatePipe],
   templateUrl: './booking-calendar.component.html',
   styleUrl: './booking-calendar.component.scss',
+  standalone: false,
 })
-export class BookingCalendarComponent implements OnInit {
-  @Input() businessId!: number;
+export class BookingCalendarComponent implements OnInit, OnDestroy {
+  businessId!: number;
 
-  private readonly store = inject(Store);
-  readonly bookings$ = this.store.select(selectBusinessBookings);
-  readonly loading$ = this.store.select(selectBusinessBookingsLoading);
+  loading = false;
+  error: string | null = null;
 
+  selectedDate = new Date().toISOString().substring(0, 10); // YYYY-MM-DD
   filterStatus: BookingStatus | null = null;
+  filterEmployeeId: number | null = null;
+
+  employees: EmployeeResponse[] = [];
   private bookings: BookingResponse[] = [];
+  filteredBookingsList: BookingResponse[] = [];
+
+  private sub = new Subscription();
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly store: Store,
+    private readonly actions$: Actions,
+    private readonly bookingService: BookingService,
+  ) {}
 
   ngOnInit(): void {
-    this.store.dispatch(BookingActions.loadBusinessBookings({ businessId: this.businessId }));
-    this.bookings$.subscribe(b => { this.bookings = b; });
+    this.businessId = +this.route.snapshot.paramMap.get('businessId')!;
+    this.loadEmployees();
+    this.loadBookings();
+
+    // Listen for status-change success actions emitted by NgRx effects
+    // and update the local booking in-place without a full reload.
+    this.sub.add(
+      this.actions$.pipe(
+        ofType(
+          BookingActions.confirmBookingSuccess,
+          BookingActions.completeBookingSuccess,
+          BookingActions.cancelBookingSuccess,
+        ),
+      ).subscribe(({ booking }) => {
+        this.replaceBooking(booking);
+        this.applyFilters();
+      }),
+    );
   }
 
-  filteredBookings(): BookingResponse[] {
-    if (!this.filterStatus) return this.bookings;
-    return this.bookings.filter(b => b.status === this.filterStatus);
+  loadBookings(): void {
+    this.loading = true;
+    this.error = null;
+    const from = new Date(this.selectedDate + 'T00:00:00').toISOString();
+    const to   = new Date(this.selectedDate + 'T23:59:59').toISOString();
+    this.sub.add(
+      this.bookingService.getBusinessBookings(this.businessId, from, to).subscribe({
+        next: page => {
+          this.bookings = page.content;
+          this.loading = false;
+          this.applyFilters();
+        },
+        error: () => { this.error = 'Failed to load bookings'; this.loading = false; },
+      })
+    );
   }
 
+  private loadEmployees(): void {
+    this.sub.add(
+      this.bookingService.getEmployees(this.businessId).subscribe({
+        next: page => (this.employees = page.content),
+        error: () => {},
+      })
+    );
+  }
+
+  prevDay(): void { this.shiftDate(-1); }
+  nextDay(): void { this.shiftDate(1); }
+  today(): void {
+    this.selectedDate = new Date().toISOString().substring(0, 10);
+    this.loadBookings();
+  }
+
+  onDateChange(value: string): void {
+    this.selectedDate = value;
+    this.loadBookings();
+  }
+
+  private shiftDate(delta: number): void {
+    const d = new Date(this.selectedDate + 'T12:00:00');
+    d.setDate(d.getDate() + delta);
+    this.selectedDate = d.toISOString().substring(0, 10);
+    this.loadBookings();
+  }
+
+  applyFilters(): void {
+    let list = this.bookings;
+    if (this.filterStatus) list = list.filter(b => b.status === this.filterStatus);
+    if (this.filterEmployeeId) list = list.filter(b => b.employeeId === this.filterEmployeeId);
+    this.filteredBookingsList = list;
+  }
+
+  /**
+   * Dispatch to the store ONLY. The NgRx effect handles the API call and
+   * emits a success/failure action.  Direct bookingService calls are removed
+   * to prevent double HTTP requests.
+   */
   confirm(booking: BookingResponse): void {
     this.store.dispatch(BookingActions.confirmBooking({ id: booking.id }));
   }
@@ -41,27 +122,13 @@ export class BookingCalendarComponent implements OnInit {
   }
 
   cancel(booking: BookingResponse): void {
-    if (confirm('Cancel this client booking?')) {
-      this.store.dispatch(BookingActions.cancelBooking({ id: booking.id, reason: 'Cancelled by business' }));
-    }
+    if (!confirm('Cancel this client booking?')) return;
+    this.store.dispatch(BookingActions.cancelBooking({ id: booking.id, reason: 'Cancelled by business' }));
   }
 
-  statusLabel(status: BookingStatus): string {
-    const map: Record<BookingStatus, string> = {
-      PENDING: 'Pending', CONFIRMED: 'Confirmed',
-      COMPLETED: 'Completed', CANCELLED: 'Cancelled', NO_SHOW: 'No-show'
-    };
-    return map[status] ?? status;
+  private replaceBooking(updated: BookingResponse): void {
+    this.bookings = this.bookings.map(b => b.id === updated.id ? updated : b);
   }
 
-  statusClass(status: BookingStatus): string {
-    const map: Record<BookingStatus, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-700',
-      CONFIRMED: 'bg-green-100 text-green-700',
-      COMPLETED: 'bg-blue-100 text-blue-700',
-      CANCELLED: 'bg-red-100 text-red-600',
-      NO_SHOW: 'bg-gray-100 text-gray-600',
-    };
-    return map[status] ?? '';
-  }
+  ngOnDestroy(): void { this.sub.unsubscribe(); }
 }

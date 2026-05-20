@@ -1,22 +1,22 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { BusinessService, ServiceResponse, Page } from '../../../core/business/business.service';
 
 @Component({
   selector: 'app-service-list',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './service-list.component.html'
+  templateUrl: './service-list.component.html',
+  standalone: false,
 })
 export class ServiceListComponent implements OnInit {
-  private readonly businessSvc = inject(BusinessService);
-  private readonly route       = inject(ActivatedRoute);
-
   businessId = signal(0);
   services   = signal<ServiceResponse[]>([]);
   loading    = signal(true);
   error      = signal<string | null>(null);
+
+  constructor(
+    private readonly businessSvc: BusinessService,
+    private readonly route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('businessId'));

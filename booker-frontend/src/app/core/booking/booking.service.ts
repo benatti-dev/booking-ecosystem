@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -16,6 +16,15 @@ export interface EmployeeResponse {
   position?: string;
   isActive: boolean;
   createdAt: string;
+}
+
+export interface CreateEmployeeRequest {
+  userId?: number;
+  branchId?: number;
+  displayName: string;
+  bio?: string;
+  avatarUrl?: string;
+  position?: string;
 }
 
 export interface SlotResponse {
@@ -76,14 +85,33 @@ export interface Page<T> {
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
-  private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
+
+  constructor(private readonly http: HttpClient) {}
 
   // ── Employees ──────────────────────────────────────────────────
 
   getEmployees(businessId: number): Observable<Page<EmployeeResponse>> {
     return this.http.get<Page<EmployeeResponse>>(
       `${this.base}/businesses/${businessId}/employees`
+    );
+  }
+
+  getEmployee(businessId: number, employeeId: number): Observable<EmployeeResponse> {
+    return this.http.get<EmployeeResponse>(
+      `${this.base}/businesses/${businessId}/employees/${employeeId}`
+    );
+  }
+
+  createEmployee(businessId: number, req: CreateEmployeeRequest): Observable<EmployeeResponse> {
+    return this.http.post<EmployeeResponse>(
+      `${this.base}/businesses/${businessId}/employees`, req
+    );
+  }
+
+  deactivateEmployee(businessId: number, employeeId: number): Observable<EmployeeResponse> {
+    return this.http.delete<EmployeeResponse>(
+      `${this.base}/businesses/${businessId}/employees/${employeeId}`
     );
   }
 
@@ -130,8 +158,10 @@ export class BookingService {
     return this.http.patch<BookingResponse>(`${this.base}/bookings/${id}/complete`, {});
   }
 
-  getBusinessBookings(businessId: number, page = 0, size = 20): Observable<Page<BookingResponse>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getBusinessBookings(businessId: number, from?: string, to?: string, page = 0, size = 100): Observable<Page<BookingResponse>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (from) params = params.set('from', from);
+    if (to) params = params.set('to', to);
     return this.http.get<Page<BookingResponse>>(
       `${this.base}/bookings/business/${businessId}`, { params }
     );

@@ -2,58 +2,76 @@
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Services</h1>
     <a [routerLink]="['../services/new']"
-       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
       + Add Service
     </a>
   </div>
 
-  <div *ngIf="loading()" class="text-gray-500">Loading...</div>
-  <div *ngIf="error()" class="p-4 bg-red-50 text-red-600 rounded-lg">{{ error() }}</div>
+  @if (loading()) {
+    <div class="text-gray-500">Loading...</div>
+  }
+  @if (error()) {
+    <div class="p-4 bg-red-50 text-red-600 rounded-lg">{{ error() }}</div>
+  }
 
-  <div *ngIf="!loading() && services().length === 0 && !error()"
-       class="text-center py-16 text-gray-400">
-    <p class="text-5xl mb-4">🛎️</p>
-    <p class="text-lg font-medium">No services yet</p>
-    <p class="mt-1">Add your first service to let clients book you.</p>
-  </div>
+  @if (!loading() && services().length === 0 && !error()) {
+    <div
+      class="text-center py-16 text-gray-400">
+      <p class="text-5xl mb-4">🛎️</p>
+      <p class="text-lg font-medium">No services yet</p>
+      <p class="mt-1">Add your first service to let clients book you.</p>
+    </div>
+  }
 
-  <div *ngIf="!loading() && services().length > 0"
-       class="overflow-x-auto bg-white rounded-xl shadow border border-gray-100">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-        <tr>
-          <th class="px-5 py-3 text-left">Service</th>
-          <th class="px-5 py-3 text-left">Duration</th>
-          <th class="px-5 py-3 text-left">Price</th>
-          <th class="px-5 py-3 text-left">Status</th>
-          <th class="px-5 py-3 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let s of services()" class="hover:bg-gray-50 transition-colors">
-          <td class="px-5 py-4">
-            <p class="font-medium text-gray-900">{{ s.name }}</p>
-            <p *ngIf="s.description" class="text-gray-400 text-xs mt-0.5 line-clamp-1">{{ s.description }}</p>
-          </td>
-          <td class="px-5 py-4 text-gray-600">{{ formatDuration(s.durationMin) }}</td>
-          <td class="px-5 py-4 text-gray-600">
-            <span *ngIf="s.price">{{ s.price | number:'1.0-2' }} {{ s.currency }}</span>
-            <span *ngIf="!s.price" class="text-gray-400 italic">On request</span>
-          </td>
-          <td class="px-5 py-4">
-            <span class="px-2 py-1 rounded-full text-xs font-medium"
+  @if (!loading() && services().length > 0) {
+    <div
+      class="overflow-x-auto bg-white rounded-xl shadow border border-gray-100">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-5 py-3 text-left">Service</th>
+            <th class="px-5 py-3 text-left">Duration</th>
+            <th class="px-5 py-3 text-left">Price</th>
+            <th class="px-5 py-3 text-left">Status</th>
+            <th class="px-5 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (s of services(); track s.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-4">
+                <p class="font-medium text-gray-900">{{ s.name }}</p>
+                @if (s.description) {
+                  <p class="text-gray-400 text-xs mt-0.5 line-clamp-1">{{ s.description }}</p>
+                }
+              </td>
+              <td class="px-5 py-4 text-gray-600">{{ formatDuration(s.durationMin) }}</td>
+              <td class="px-5 py-4 text-gray-600">
+                @if (s.price) {
+                  <span>{{ s.price | number:'1.0-2' }} {{ s.currency }}</span>
+                }
+                @if (!s.price) {
+                  <span class="text-gray-400 italic">On request</span>
+                }
+              </td>
+              <td class="px-5 py-4">
+                <span class="px-2 py-1 rounded-full text-xs font-medium"
                   [ngClass]="s.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
-              {{ s.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </td>
-          <td class="px-5 py-4 text-right">
-            <button *ngIf="s.isActive" (click)="deactivate(s.id)"
+                  {{ s.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-5 py-4 text-right">
+                @if (s.isActive) {
+                  <button (click)="deactivate(s.id)"
                     class="text-red-500 hover:text-red-700 text-xs font-medium">
-              Deactivate
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+                    Deactivate
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>

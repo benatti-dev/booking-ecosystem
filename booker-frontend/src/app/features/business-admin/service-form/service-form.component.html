@@ -1,7 +1,9 @@
 <div class="p-8 max-w-xl mx-auto">
   <h1 class="text-2xl font-bold text-gray-900 mb-6">Add New Service</h1>
 
-  <div *ngIf="error()" class="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{{ error() }}</div>
+  @if (error()) {
+    <div class="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{{ error() }}</div>
+  }
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
 
@@ -9,111 +11,60 @@
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
       <input formControlName="name" type="text" placeholder="e.g. Haircut & Styling"
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-      <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid"
-         class="text-red-500 text-xs mt-1">Name is required.</p>
-    </div>
-
-    <!-- Description -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-      <textarea formControlName="description" rows="2" placeholder="Short description..."
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"></textarea>
-    </div>
-
-    <!-- Duration & Price -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
-        <input formControlName="durationMin" type="number" min="1" placeholder="60"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-        <p *ngIf="form.get('durationMin')?.touched && form.get('durationMin')?.invalid"
-           class="text-red-500 text-xs mt-1">Duration must be ≥ 1.</p>
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+        @if (form.get('name')?.touched && form.get('name')?.invalid) {
+          <p
+          class="text-red-500 text-xs mt-1">Name is required.</p>
+        }
       </div>
+
+      <!-- Description -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-        <div class="flex gap-2">
-          <input formControlName="price" type="number" min="0" step="0.01" placeholder="0.00"
-                 class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-          <input formControlName="currency" type="text" maxlength="3"
-                 class="w-16 border border-gray-300 rounded-lg px-2 py-2 text-center" />
-        </div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea formControlName="description" rows="2" placeholder="Short description..."
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-    </div>
 
-    <!-- Dynamic Attribute Fields -->
-    <ng-container *ngIf="definitions().length > 0" [formGroup]="attrsForm">
-      <hr class="border-gray-200" />
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Service Attributes</h2>
-
-      <ng-container *ngFor="let def of definitions()">
-
-        <!-- TEXT -->
-        <div *ngIf="def.fieldType === 'TEXT'">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            {{ def.fieldLabel }}<span *ngIf="def.isRequired" class="text-red-500 ml-1">*</span>
-          </label>
-          <input [formControlName]="def.fieldKey" type="text"
-                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <!-- NUMBER -->
-        <div *ngIf="def.fieldType === 'NUMBER'">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            {{ def.fieldLabel }}<span *ngIf="def.isRequired" class="text-red-500 ml-1">*</span>
-          </label>
-          <input [formControlName]="def.fieldKey" type="number"
-                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <!-- BOOLEAN -->
-        <div *ngIf="def.fieldType === 'BOOLEAN'" class="flex items-center gap-2">
-          <input [formControlName]="def.fieldKey" type="checkbox" class="w-4 h-4 accent-blue-600" />
-          <label class="text-sm text-gray-700">{{ def.fieldLabel }}</label>
-        </div>
-
-        <!-- SELECT -->
-        <div *ngIf="def.fieldType === 'SELECT'">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            {{ def.fieldLabel }}<span *ngIf="def.isRequired" class="text-red-500 ml-1">*</span>
-          </label>
-          <select [formControlName]="def.fieldKey"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-            <option value="" disabled>Select...</option>
-            <option *ngFor="let opt of def.options" [value]="opt">{{ opt }}</option>
-          </select>
-        </div>
-
-        <!-- MULTI_SELECT -->
-        <div *ngIf="def.fieldType === 'MULTI_SELECT'">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            {{ def.fieldLabel }}<span *ngIf="def.isRequired" class="text-red-500 ml-1">*</span>
-          </label>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" *ngFor="let opt of def.options"
-                    (click)="toggleMultiSelect(def.fieldKey, opt)"
-                    class="px-3 py-1.5 rounded-lg border text-sm transition-colors"
-                    [ngClass]="isSelected(def.fieldKey, opt)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'">
-              {{ opt }}
-            </button>
+      <!-- Duration & Price -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
+          <input formControlName="durationMin" type="number" min="1" placeholder="60"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+            @if (form.get('durationMin')?.touched && form.get('durationMin')?.invalid) {
+              <p
+              class="text-red-500 text-xs mt-1">Duration must be ≥ 1.</p>
+            }
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+            <div class="flex gap-2">
+              <input formControlName="price" type="number" min="0" step="0.01" placeholder="0.00"
+                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+                <input formControlName="currency" type="text" maxlength="3"
+                  class="w-16 border border-gray-300 rounded-lg px-2 py-2 text-center" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Attribute Fields -->
+            @if (definitions().length > 0) {
+              <app-dynamic-attribute-form
+                [definitions]="definitions()"
+                [form]="attrsForm">
+              </app-dynamic-attribute-form>
+            }
+
+            <!-- Actions -->
+            <div class="flex justify-between pt-2">
+              <button type="button" (click)="cancel()"
+                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                Cancel
+              </button>
+              <button type="submit" [disabled]="loading()"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
+                {{ loading() ? 'Saving...' : 'Save Service' }}
+              </button>
+            </div>
+          </form>
         </div>
-
-      </ng-container>
-    </ng-container>
-
-    <!-- Actions -->
-    <div class="flex justify-between pt-2">
-      <button type="button" (click)="cancel()"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
-        Cancel
-      </button>
-      <button type="submit" [disabled]="loading()"
-              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
-        {{ loading() ? 'Saving...' : 'Save Service' }}
-      </button>
-    </div>
-  </form>
-</div>

@@ -1,20 +1,15 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Component, OnInit, signal } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { switchMap, catchError, of } from 'rxjs';
 import { BusinessService, BusinessCategory } from '../../../core/business/business.service';
 
 @Component({
   selector: 'app-business-register',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './business-register.component.html'
+  templateUrl: './business-register.component.html',
+  standalone: false,
 })
 export class BusinessRegisterComponent implements OnInit {
-  private readonly fb         = inject(FormBuilder);
-  private readonly businessSvc = inject(BusinessService);
-  private readonly router     = inject(Router);
-
   step = signal(1);
   totalSteps = 3;
 
@@ -38,13 +33,19 @@ export class BusinessRegisterComponent implements OnInit {
     country:    ['UA'],
     latitude:   [null as number | null],
     longitude:  [null as number | null],
-    timezone:   ['Europe/Kiev']
+    timezone:   ['Europe/Kiev'],
   });
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly businessSvc: BusinessService,
+    private readonly router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.businessSvc.getCategories().subscribe({
       next: cats => this.categories.set(cats),
-      error: () => this.error.set('Failed to load categories')
+      error: () => this.error.set('Failed to load categories'),
     });
   }
 
@@ -75,10 +76,11 @@ export class BusinessRegisterComponent implements OnInit {
       categoryId: s1.categoryId!,
       name: s1.name!,
       description: s1.description ?? undefined
-    }).subscribe({
-      next: business => {
+    }).pipe(
+      switchMap(business => {
+        this.createdBusinessId.set(business.id);
         const s2 = this.step2.value;
-        this.businessSvc.createBranch(business.id, {
+        return this.businessSvc.createBranch(business.id, {
           name: s2.branchName!,
           address: s2.address!,
           city: s2.city!,
@@ -87,19 +89,17 @@ export class BusinessRegisterComponent implements OnInit {
           longitude: s2.longitude ?? undefined,
           timezone: s2.timezone ?? 'Europe/Kiev',
           isPrimary: true
-        }).subscribe({
-          next: () => {
-            this.createdBusinessId.set(business.id);
-            this.step.set(3);
-            this.loading.set(false);
-          },
-          error: () => {
+        }).pipe(
+          catchError(() => {
             this.error.set('Business created but failed to add branch. You can add a branch later.');
-            this.createdBusinessId.set(business.id);
-            this.step.set(3);
-            this.loading.set(false);
-          }
-        });
+            return of(null);
+          })
+        );
+      })
+    ).subscribe({
+      next: () => {
+        this.step.set(3);
+        this.loading.set(false);
       },
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to create business.');

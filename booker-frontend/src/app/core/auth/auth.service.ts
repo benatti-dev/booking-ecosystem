@@ -1,4 +1,4 @@
-﻿import { inject, Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of, throwError } from 'rxjs';
@@ -51,8 +51,10 @@ export class AuthService {
   private readonly USER_KEY    = 'booker_user';
   private readonly api         = environment.apiUrl;
 
-  private readonly http   = inject(HttpClient);
-  private readonly router = inject(Router);
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router,
+  ) {}
 
   verifySession(): Observable<AuthUser | null> {
     const token = this.getAccessToken();

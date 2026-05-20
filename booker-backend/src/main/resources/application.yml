@@ -20,7 +20,7 @@
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
         jdbc:
           lob:
             non_contextual_creation: true
@@ -84,4 +84,6 @@ logging:
   level:
     com.booker: DEBUG
     org.springframework.security: INFO
-    org.hibernate.SQL: DEBUG
+#    org.hibernate.SQL: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging.simp: DEBUG
